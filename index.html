@@ -800,7 +800,10 @@ function App(){
         h('span',{style:{height:18,width:1,background:'#E0E2E6',display:'inline-block'}}),
         h('span',{style:{fontSize:13,fontWeight:600,color:'#687083',letterSpacing:'.01em'}},"Calculateur de ROI")
       ),
-      h('div',{className:'roi-topactions',style:{fontSize:12,fontWeight:600,color:'#A4A9B5',textTransform:'uppercase',letterSpacing:'.06em'}},"Estimation gratuite · 5 min")
+      h('div',{style:{display:'flex',alignItems:'center',gap:10}},
+        h('a',{href:'https://www.komin.io',target:'_blank',rel:'noopener',style:{fontSize:13,fontWeight:500,color:'#687083',textDecoration:'none',padding:'7px 14px',border:'1px solid #ECEEF5',borderRadius:8,background:'#fff',cursor:'pointer',lineHeight:1}},"Visiter komin.io"),
+        h('a',{href:'https://meetings-eu1.hubspot.com/cyrille-pailleret',target:'_blank',rel:'noopener',style:{fontSize:13,fontWeight:600,color:'#fff',textDecoration:'none',padding:'7px 14px',borderRadius:8,background:'#3D52D5',cursor:'pointer',lineHeight:1,whiteSpace:'nowrap'}},"Obtenir une démo")
+      )
     ),
     /* Progress */
     h(ProgressBar,{step}),
