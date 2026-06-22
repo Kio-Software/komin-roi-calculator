@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:"Manrope";src:url("fonts/Manrope-VariableFont_wght.ttf") format("truetype-variations"),url("fonts/Manrope-VariableFont_wght.ttf") format("truetype");font-weight:200 900;font-style:normal;font-display:swap;}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:#F7F9FC;font-family:"Manrope",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#4b4d51;-webkit-font-smoothing:antialiased;}
+@keyframes stepIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+@keyframes backdropIn{from{opacity:0;}to{opacity:1;}}
+@keyframes modalIn{from{opacity:0;transform:translateY(14px) scale(.985);}to{opacity:1;transform:none;}}
+input[type=range]{-webkit-appearance:none;appearance:none;height:6px;border-radius:999px;background:#ECEEF5;outline:none;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:#3D52D5;cursor:pointer;border:3px solid #fff;box-shadow:0 1px 3px rgba(24,24,25,.28);transition:transform .12s;}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.1);}
+input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#3D52D5;cursor:pointer;border:3px solid #fff;box-shadow:0 1px 3px rgba(24,24,25,.28);}
+.roi-bignum{font-variant-numeric:tabular-nums;}
+@media (max-width:680px){.roi-steplabel{display:none;}.roi-pad{padding-left:16px !important;padding-right:16px !important;}.roi-grid2{grid-template-columns:1fr !important;}.roi-hero{font-size:46px !important;}.roi-topactions{display:none !important;}}
+@media print{.roi-noprint{display:none !important;}body{background:#fff;}.roi-report{box-shadow:none !important;margin:0 !important;}}
+</style>
+</helmet>
+
+<sc-if value="{{ isApp }}" hint-placeholder-val="{{ true }}">
+<div style="min-height:100vh;background:#F7F9FC;display:flex;flex-direction:column;">
+
+  <!-- TOP BAR -->
+  <div class="roi-pad" style="display:flex;align-items:center;justify-content:space-between;padding:18px 40px;border-bottom:1px solid #ECEEF5;background:#fff;position:sticky;top:0;z-index:20;">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <span style="color:#3D52D5;display:flex;">{{ kominLogo }}</span>
+      <span style="height:18px;width:1px;background:#E0E2E6;display:inline-block;"></span>
+      <span style="font-size:13px;font-weight:600;color:#687083;letter-spacing:.01em;">Calculateur de ROI</span>
+    </div>
+    <div class="roi-topactions" style="font-size:12px;font-weight:600;color:#A4A9B5;text-transform:uppercase;letter-spacing:.06em;">Estimation gratuite · 5 min</div>
+  </div>
+
+  <!-- PROGRESS BAR -->
+  <div class="roi-pad" style="background:#fff;border-bottom:1px solid #ECEEF5;padding:16px 40px;">
+    <div style="max-width:880px;margin:0 auto;display:flex;align-items:center;gap:6px;">
+      <sc-for list="{{ progressSteps }}" as="ps" hint-placeholder-count="5">
+       <div style="display:contents;">
+        <sc-if value="{{ ps.showLine }}">
+          <div style="flex:1;height:2px;border-radius:2px;background:{{ ps.lineColor }};margin:0 2px;align-self:flex-start;margin-top:15px;"></div>
+        </sc-if>
+        <div onClick="{{ ps.onClick }}" style="display:flex;align-items:center;gap:9px;cursor:{{ ps.cursor }};flex:none;">
+          <div style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;background:{{ ps.cBg }};color:{{ ps.cFg }};border:2px solid {{ ps.cBorder }};flex:none;transition:all .2s;">
+            <sc-if value="{{ ps.done }}"><span style="display:flex;width:15px;height:15px;">{{ checkIcon }}</span></sc-if>
+            <sc-if value="{{ ps.notDone }}"><span>{{ ps.n }}</span></sc-if>
+          </div>
+          <span class="roi-steplabel" style="font-size:13px;font-weight:600;color:{{ ps.lblColor }};white-space:nowrap;">{{ ps.label }}</span>
+        </div>
+       </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="roi-pad" style="flex:1;padding:40px;position:relative;">
+
+    <!-- STEP 1 — QUALIFICATION -->
+    <sc-if value="{{ isQualif }}" hint-placeholder-val="{{ true }}">
+      <div style="max-width:880px;margin:0 auto;animation:stepIn .35s ease both;">
+        <h1 style="font-size:32px;line-height:1.15;font-weight:800;letter-spacing:-0.03em;color:#111;margin:0 0 8px;">Combien vous coûte le terrain non digitalisé&nbsp;?</h1>
+        <p style="font-size:16px;line-height:1.5;color:#687083;margin:0 0 32px;max-width:620px;">Cinq questions, une estimation chiffrée. On part de vos chiffres et d'un coût horaire moyen — tout reste ajustable.</p>
+
+        <div style="background:#fff;border:1px solid #ECEEF5;border-radius:12px;padding:28px;box-shadow:0 1px 2px rgba(24,24,25,.05);margin-bottom:20px;">
+          <div class="roi-grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:28px;">
+            <div>
+              <label style="display:block;font-size:13px;font-weight:600;color:#111;margin-bottom:8px;">Votre secteur</label>
+              <select value="{{ sector }}" onChange="{{ onSector }}" style="display:block;width:100%;padding:11px 12px;font-family:inherit;font-size:14px;color:#111;background:#fff;border:1px solid #E0E2E6;border-radius:8px;cursor:pointer;">
+                <option value="">Choisir un secteur…</option>
+                <sc-for list="{{ sectors }}" as="s" hint-placeholder-count="6">
+                  <option value="{{ s }}">{{ s }}</option>
+                </sc-for>
+              </select>
+              <p style="font-size:12px;color:#A4A9B5;margin:8px 0 0;">Sert à calibrer les ordres de grandeur du rapport.</p>
+            </div>
+            <div>
+              <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px;">
+                <label style="font-size:13px;font-weight:600;color:#111;">Taille de l'équipe terrain</label>
+                <span style="font-size:14px;font-weight:700;color:#3D52D5;font-variant-numeric:tabular-nums;">{{ teamSizeLabel }}</span>
+              </div>
+              <input type="range" min="1" max="500" step="1" value="{{ teamSize }}" onChange="{{ onTeamSize }}" style="width:100%;height:6px;-webkit-appearance:none;appearance:none;border-radius:999px;outline:none;cursor:pointer;background:{{ teamTrack }};">
+              <p style="font-size:12px;color:#A4A9B5;margin:8px 0 0;">Opérateurs, intérimaires et sous-traitants présents sur site.</p>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin:0 0 14px;">
+          <h2 style="font-size:18px;font-weight:700;color:#111;letter-spacing:-0.01em;margin:0;">Quels processus voulez-vous chiffrer&nbsp;?</h2>
+          <span style="font-size:12px;color:#A4A9B5;">Sélection multiple</span>
+        </div>
+
+        <div class="roi-grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <sc-for list="{{ moduleCards }}" as="mc" hint-placeholder-count="5">
+            <div onClick="{{ mc.onToggle }}" style="display:flex;gap:14px;padding:18px;border-radius:12px;cursor:pointer;background:{{ mc.bg }};border:1.5px solid {{ mc.border }};box-shadow:0 1px 2px rgba(24,24,25,.05);transition:all .15s;">
+              <div style="width:40px;height:40px;border-radius:10px;flex:none;display:flex;align-items:center;justify-content:center;background:{{ mc.iconBg }};color:{{ mc.iconFg }};padding:9px;">{{ mc.icon }}</div>
+              <div style="flex:1;min-width:0;">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                  <span style="font-size:15px;font-weight:700;color:#111;letter-spacing:-0.01em;">{{ mc.title }}</span>
+                  <span style="width:20px;height:20px;border-radius:6px;flex:none;display:flex;align-items:center;justify-content:center;background:{{ mc.checkBg }};border:1.5px solid {{ mc.checkBorder }};color:#fff;padding:3px;">
+                    <sc-if value="{{ mc.selected }}"><span style="display:flex;">{{ checkIcon }}</span></sc-if>
+                  </span>
+                </div>
+                <p style="font-size:13px;line-height:1.45;color:#687083;margin:4px 0 0;">{{ mc.desc }}</p>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:32px;gap:16px;">
+          <span style="font-size:13px;color:#A4A9B5;">{{ qualifHint }}</span>
+          <button onClick="{{ goQuestions }}" disabled="{{ qualifDisabled }}" style="display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 24px;border:none;border-radius:8px;font-family:inherit;font-size:15px;font-weight:600;color:#fff;background:{{ nextBg }};cursor:{{ nextCursor }};box-shadow:0 1px 2px rgba(24,24,25,.08);transition:background .15s;">
+            <span>Continuer</span><span style="display:flex;width:16px;height:16px;">{{ arrowIcon }}</span>
+          </button>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- STEP 2 — QUESTIONS PAR MODULE -->
+    <sc-if value="{{ isQuestions }}">
+      <div style="max-width:880px;margin:0 auto;animation:stepIn .35s ease both;">
+        <h1 style="font-size:28px;line-height:1.18;font-weight:800;letter-spacing:-0.03em;color:#111;margin:0 0 8px;">Parlez-nous de votre quotidien terrain</h1>
+        <p style="font-size:16px;color:#687083;margin:0 0 28px;">Ajustez chaque curseur à votre réalité. Le résultat se calcule à la fin.</p>
+
+        <div style="display:flex;flex-direction:column;gap:18px;">
+          <sc-for list="{{ sections }}" as="sec" hint-placeholder-count="3">
+            <div style="background:#fff;border:1px solid #ECEEF5;border-radius:12px;padding:26px;box-shadow:0 1px 2px rgba(24,24,25,.05);">
+              <div style="display:flex;align-items:center;gap:14px;margin-bottom:22px;">
+                <div style="width:40px;height:40px;border-radius:10px;flex:none;display:flex;align-items:center;justify-content:center;background:#EFF1FC;color:#3D52D5;padding:9px;">{{ sec.icon }}</div>
+                <div>
+                  <div style="font-size:16px;font-weight:700;color:#111;letter-spacing:-0.01em;">{{ sec.title }}</div>
+                  <div style="font-size:13px;color:#687083;">{{ sec.desc }}</div>
+                </div>
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:22px;">
+                <sc-for list="{{ sec.inputs }}" as="inp" hint-placeholder-count="3">
+                  <div>
+                    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:9px;">
+                      <label style="font-size:14px;font-weight:600;color:#111;">{{ inp.label }}</label>
+                      <sc-if value="{{ inp.isSlider }}">
+                        <span style="flex:none;font-size:13px;font-weight:700;color:#3D52D5;background:#EFF1FC;padding:3px 10px;border-radius:999px;font-variant-numeric:tabular-nums;white-space:nowrap;">{{ inp.displayValue }}</span>
+                      </sc-if>
+                    </div>
+                    <sc-if value="{{ inp.isSlider }}">
+                      <input type="range" data-mod="{{ sec.id }}" data-key="{{ inp.key }}" min="{{ inp.min }}" max="{{ inp.max }}" step="{{ inp.step }}" value="{{ inp.value }}" onChange="{{ onInput }}" style="width:100%;height:6px;-webkit-appearance:none;appearance:none;border-radius:999px;outline:none;cursor:pointer;background:{{ inp.track }};">
+                    </sc-if>
+                    <sc-if value="{{ inp.isSelect }}">
+                      <select data-mod="{{ sec.id }}" data-key="{{ inp.key }}" value="{{ inp.value }}" onChange="{{ onSelectInput }}" style="display:block;width:100%;padding:10px 12px;font-family:inherit;font-size:14px;color:#111;background:#fff;border:1px solid #E0E2E6;border-radius:8px;cursor:pointer;">
+                        <sc-for list="{{ inp.options }}" as="opt" hint-placeholder-count="2">
+                          <option value="{{ opt }}">{{ opt }}</option>
+                        </sc-for>
+                      </select>
+                    </sc-if>
+                    <p style="font-size:12.5px;line-height:1.45;color:#A4A9B5;margin:9px 0 0;">{{ inp.hint }}</p>
+                  </div>
+                </sc-for>
+              </div>
+
+              <div style="margin-top:22px;display:flex;gap:12px;padding:14px 16px;border-radius:10px;background:#EFF1FC;">
+                <span style="display:flex;width:18px;height:18px;flex:none;color:#3D52D5;margin-top:1px;">{{ bulbIcon }}</span>
+                <div>
+                  <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#3D52D5;margin-bottom:3px;">Le saviez-vous&nbsp;?</div>
+                  <div style="font-size:13.5px;line-height:1.5;color:#2C41C4;">{{ sec.fact }}</div>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:28px;">
+          <button onClick="{{ backToQualif }}" style="display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 18px;border:1px solid #E0E2E6;border-radius:8px;background:#fff;font-family:inherit;font-size:15px;font-weight:600;color:#111;cursor:pointer;">Retour</button>
+          <button onClick="{{ goResult }}" style="display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 24px;border:none;border-radius:8px;background:#3D52D5;font-family:inherit;font-size:15px;font-weight:600;color:#fff;cursor:pointer;box-shadow:0 1px 2px rgba(24,24,25,.08);">
+            <span>Voir mon estimation</span><span style="display:flex;width:16px;height:16px;">{{ arrowIcon }}</span>
+          </button>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- STEP 3 — RESULT -->
+    <sc-if value="{{ isResult }}">
+      <div style="max-width:880px;margin:0 auto;animation:stepIn .35s ease both;">
+
+      <div style="position:relative;">
+        <div style="filter:{{ heroBlur }};transition:filter .35s;pointer-events:{{ teasePE }};">
+        <div style="background:#fff;border:1px solid #ECEEF5;border-radius:16px;padding:40px;box-shadow:0 8px 16px -4px rgba(24,24,25,.08),0 4px 8px -2px rgba(24,24,25,.04);text-align:center;">
+          <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#A4A9B5;margin-bottom:14px;">Gain annuel estimé avec Komin</div>
+          <div class="roi-hero roi-bignum" style="font-size:68px;line-height:1;font-weight:800;letter-spacing:-0.04em;color:#111;">{{ totalLabel }}</div>
+          <div style="display:flex;align-items:center;justify-content:center;gap:20px;margin-top:18px;flex-wrap:wrap;">
+            <span style="font-size:15px;color:#687083;">≈ <strong style="color:#111;font-weight:700;">{{ hoursLabel }}</strong> récupérées</span>
+            <span style="width:4px;height:4px;border-radius:50%;background:#CDD2DE;"></span>
+            <span style="font-size:15px;color:#687083;">≈ <strong style="color:#111;font-weight:700;">{{ etpLabel }}</strong> temps plein</span>
+          </div>
+        </div>
+
+        <div style="margin-top:18px;background:#fff;border:1px solid #ECEEF5;border-radius:12px;padding:26px;box-shadow:0 1px 2px rgba(24,24,25,.05);">
+          <div style="font-size:14px;font-weight:700;color:#111;margin-bottom:18px;">Décomposition par processus</div>
+          <div style="display:flex;flex-direction:column;gap:16px;">
+            <sc-for list="{{ breakdown }}" as="b" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:14px;">
+                <div style="width:32px;height:32px;border-radius:8px;flex:none;display:flex;align-items:center;justify-content:center;background:#EFF1FC;color:#3D52D5;padding:7px;">{{ b.icon }}</div>
+                <div style="flex:1;min-width:0;">
+                  <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:6px;">
+                    <span style="font-size:14px;font-weight:600;color:#111;">{{ b.title }}</span>
+                    <span style="font-size:14px;font-weight:700;color:#111;font-variant-numeric:tabular-nums;">{{ b.eurosLabel }}</span>
+                  </div>
+                  <div style="height:8px;border-radius:999px;background:#ECEEF5;overflow:hidden;">
+                    <div style="height:100%;border-radius:999px;background:#3D52D5;width:{{ b.pct }}%;transition:width .4s;"></div>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="margin-top:18px;display:flex;gap:14px;align-items:flex-start;padding:18px 20px;border-radius:12px;background:#F9FAFB;border:1px solid #ECEEF5;">
+          <span style="display:flex;width:18px;height:18px;flex:none;color:#A4A9B5;margin-top:1px;">{{ infoIcon }}</span>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:700;color:#111;margin-bottom:6px;">Hypothèses</div>
+            <p style="font-size:13px;line-height:1.55;color:#687083;margin:0 0 12px;">Base&nbsp;: 47 semaines et 220 jours travaillés par an. Estimation indicative, à affiner ensemble. Le coût horaire chargé est ajustable&nbsp;:</p>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:13px;color:#687083;">Coût horaire chargé</span>
+              <div style="display:inline-flex;align-items:center;gap:4px;border:1px solid #E0E2E6;border-radius:8px;padding:0 10px;background:#fff;height:34px;">
+                <input type="number" min="1" max="120" value="{{ hourlyCost }}" onChange="{{ onHourly }}" style="width:46px;border:none;outline:none;font-family:inherit;font-size:14px;font-weight:700;color:#111;background:transparent;text-align:right;">
+                <span style="font-size:14px;font-weight:700;color:#687083;">€/h</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        </div>
+        <sc-if value="{{ showTease }}">
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;">
+            <div style="max-width:430px;width:100%;background:#fff;border-radius:16px;border:1px solid #ECEEF5;box-shadow:0 20px 32px -8px rgba(24,24,25,.18);padding:30px;">
+              <div style="display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:#EFF1FC;color:#3D52D5;font-size:11px;font-weight:700;letter-spacing:.06em;margin-bottom:16px;">
+                <span style="display:flex;width:13px;height:13px;">{{ lockIcon }}</span><span>AUDIT COMPLET</span>
+              </div>
+              <div style="font-size:20px;line-height:1.25;font-weight:800;letter-spacing:-0.02em;color:#111;margin-bottom:8px;">Votre estimation est prête. Le rapport va beaucoup plus loin.</div>
+              <p style="font-size:14px;line-height:1.5;color:#687083;margin:0 0 18px;">Recevez l'audit détaillé, prêt à partager en interne. Il contient&nbsp;:</p>
+              <div style="display:flex;flex-direction:column;gap:11px;margin-bottom:24px;">
+                <sc-for list="{{ teaseItems }}" as="ti" hint-placeholder-count="4">
+                  <div style="display:flex;align-items:flex-start;gap:10px;">
+                    <span style="width:18px;height:18px;flex:none;border-radius:50%;background:#EFF1FC;color:#3D52D5;display:flex;align-items:center;justify-content:center;padding:4px;margin-top:1px;">{{ checkIcon }}</span>
+                    <span style="font-size:14px;line-height:1.4;color:#111;">{{ ti }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <button onClick="{{ openEmail }}" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;height:48px;border:none;border-radius:8px;background:#3D52D5;font-family:inherit;font-size:16px;font-weight:600;color:#fff;cursor:pointer;box-shadow:0 4px 12px -2px rgba(61,82,213,.4);">
+                <span>Recevoir mon audit complet</span><span style="display:flex;width:16px;height:16px;">{{ arrowIcon }}</span>
+              </button>
+            </div>
+          </div>
+        </sc-if>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:28px;gap:16px;flex-wrap:wrap;">
+          <button onClick="{{ backToQuestions }}" style="display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 18px;border:1px solid #E0E2E6;border-radius:8px;background:#fff;font-family:inherit;font-size:15px;font-weight:600;color:#111;cursor:pointer;">Modifier mes réponses</button>
+          <button onClick="{{ openEmail }}" style="display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 28px;border:none;border-radius:8px;background:#3D52D5;font-family:inherit;font-size:16px;font-weight:600;color:#fff;cursor:pointer;box-shadow:0 4px 12px -2px rgba(61,82,213,.4);">
+            <span>Recevoir mon audit complet</span><span style="display:flex;width:16px;height:16px;">{{ arrowIcon }}</span>
+          </button>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- STEP 5 — CONFIRMATION -->
+    <sc-if value="{{ isConfirm }}">
+      <div style="max-width:560px;margin:24px auto 0;animation:stepIn .4s ease both;text-align:center;">
+        <div style="width:72px;height:72px;border-radius:50%;background:#B3FCE1;display:flex;align-items:center;justify-content:center;margin:0 auto 24px;color:#009A4D;padding:20px;">{{ bigCheckIcon }}</div>
+        <h1 style="font-size:30px;line-height:1.2;font-weight:800;letter-spacing:-0.03em;color:#111;margin:0 0 10px;">Votre audit est en route&nbsp;✓</h1>
+        <p style="font-size:16px;line-height:1.55;color:#687083;margin:0 0 6px;">Nous l'envoyons à <strong style="color:#111;font-weight:700;">{{ email }}</strong>.</p>
+        <p style="font-size:14px;color:#A4A9B5;margin:0 0 28px;">Pensez à vérifier vos spams — il arrive d'ordinaire en moins d'une minute.</p>
+
+        <div style="background:#fff;border:1px solid #ECEEF5;border-radius:12px;padding:22px;box-shadow:0 1px 2px rgba(24,24,25,.05);margin-bottom:28px;">
+          <div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#A4A9B5;margin-bottom:8px;">Votre estimation</div>
+          <div class="roi-bignum" style="font-size:36px;font-weight:800;letter-spacing:-0.03em;color:#3D52D5;">{{ totalLabel }}<span style="font-size:18px;color:#A4A9B5;font-weight:700;"> / an</span></div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <a href="{{ calendlyUrl }}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:8px;background:#3D52D5;font-size:16px;font-weight:600;color:#fff;text-decoration:none;box-shadow:0 4px 12px -2px rgba(61,82,213,.4);">
+            <span style="display:flex;width:18px;height:18px;">{{ calendarIcon }}</span><span>Prendre rendez-vous avec un expert</span>
+          </a>
+          <button onClick="{{ openReport }}" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;height:48px;border-radius:8px;background:#fff;border:1px solid #E0E2E6;font-family:inherit;font-size:15px;font-weight:600;color:#111;cursor:pointer;">
+            <span style="display:flex;width:16px;height:16px;">{{ downloadIcon }}</span><span>Télécharger mon rapport maintenant</span>
+          </button>
+        </div>
+        <p style="font-size:12px;color:#A4A9B5;margin:22px 0 0;">Le rendez-vous dure 20 minutes. On revoit ces chiffres ensemble, sans engagement.</p>
+      </div>
+    </sc-if>
+
+  </div>
+
+  <!-- EMAIL GATE MODAL -->
+  <sc-if value="{{ isEmailModal }}">
+    <div style="position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(17,17,17,.45);backdrop-filter:blur(3px);animation:backdropIn .2s ease both;" onClick="{{ closeEmail }}">
+      <div onClick="{{ stop }}" style="width:100%;max-width:440px;background:#fff;border-radius:16px;padding:32px;box-shadow:0 32px 48px -12px rgba(24,24,25,.22);animation:modalIn .28s cubic-bezier(.2,.7,.3,1) both;position:relative;">
+        <button onClick="{{ closeEmail }}" style="position:absolute;top:18px;right:18px;width:32px;height:32px;border:none;border-radius:8px;background:#F9FAFB;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#687083;padding:8px;">{{ xIcon }}</button>
+        <div style="width:44px;height:44px;border-radius:11px;background:#EFF1FC;display:flex;align-items:center;justify-content:center;color:#3D52D5;padding:11px;margin-bottom:18px;">{{ mailIcon }}</div>
+        <h2 style="font-size:22px;line-height:1.2;font-weight:800;letter-spacing:-0.02em;color:#111;margin:0 0 8px;">Recevez votre audit complet — gratuit</h2>
+        <p style="font-size:14px;line-height:1.5;color:#687083;margin:0 0 8px;">Le rapport détaillé, processus par processus, avec vos hypothèses. Format PDF, prêt à partager en interne.</p>
+        <div style="display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:8px;background:#F9FAFB;margin-bottom:22px;">
+          <span style="font-size:13px;color:#687083;">Votre estimation&nbsp;:</span><span style="font-size:14px;font-weight:700;color:#3D52D5;filter:blur(6px);user-select:none;">{{ totalLabel }}</span><span style="font-size:14px;font-weight:700;color:#3D52D5;"> / an</span>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div>
+            <label style="display:block;font-size:13px;font-weight:600;color:#111;margin-bottom:6px;">Prénom</label>
+            <input type="text" value="{{ firstName }}" onInput="{{ onFirst }}" placeholder="Marie" style="display:block;width:100%;padding:11px 12px;font-family:inherit;font-size:15px;color:#111;background:#fff;border:1px solid #E0E2E6;border-radius:8px;outline:none;">
+          </div>
+          <div>
+            <label style="display:block;font-size:13px;font-weight:600;color:#111;margin-bottom:6px;">Email professionnel</label>
+            <input type="email" value="{{ email }}" onInput="{{ onEmail }}" placeholder="marie@votre-entreprise.fr" style="display:block;width:100%;padding:11px 12px;font-family:inherit;font-size:15px;color:#111;background:#fff;border:1px solid {{ emailBorder }};border-radius:8px;outline:none;">
+            <sc-if value="{{ showEmailError }}"><p style="font-size:12px;color:#E22020;margin:6px 0 0;">Indiquez une adresse email professionnelle valide.</p></sc-if>
+          </div>
+        </div>
+
+        <button onClick="{{ submit }}" disabled="{{ submitDisabled }}" style="width:100%;margin-top:20px;height:48px;border:none;border-radius:8px;background:{{ submitBg }};font-family:inherit;font-size:16px;font-weight:600;color:#fff;cursor:{{ submitCursor }};box-shadow:0 1px 2px rgba(24,24,25,.08);transition:background .15s;">Recevoir mon audit</button>
+        <p style="font-size:11.5px;line-height:1.5;color:#A4A9B5;margin:14px 0 0;text-align:center;">En continuant, vous acceptez d'être recontacté par Komin. Aucune revente de données. Désinscription en un clic. <span style="white-space:nowrap;">(RGPD)</span></p>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+</sc-if>
+
+<!-- REPORT VIEW -->
+<sc-if value="{{ isReport }}">
+<div style="min-height:100vh;background:#F7F9FC;padding:32px 20px;">
+  <div class="roi-noprint" style="max-width:760px;margin:0 auto 16px;display:flex;align-items:center;justify-content:space-between;">
+    <button onClick="{{ closeReport }}" style="display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px;border:1px solid #E0E2E6;border-radius:8px;background:#fff;font-family:inherit;font-size:14px;font-weight:600;color:#111;cursor:pointer;">Retour</button>
+    <button onClick="{{ printReport }}" style="display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 18px;border:none;border-radius:8px;background:#3D52D5;font-family:inherit;font-size:14px;font-weight:600;color:#fff;cursor:pointer;"><span style="display:flex;width:15px;height:15px;">{{ downloadIcon }}</span><span>Imprimer / PDF</span></button>
+  </div>
+
+  <div class="roi-report" style="max-width:760px;margin:0 auto;background:#fff;border:1px solid #ECEEF5;border-radius:12px;padding:48px;box-shadow:0 8px 16px -4px rgba(24,24,25,.08);">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding-bottom:24px;border-bottom:2px solid #111;">
+      <div>
+        <span style="color:#3D52D5;display:flex;margin-bottom:18px;">{{ kominLogoReport }}</span>
+        <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#3D52D5;margin-bottom:6px;">Audit ROI</div>
+        <h1 style="font-size:28px;line-height:1.15;font-weight:800;letter-spacing:-0.03em;color:#111;margin:0;">{{ company }}</h1>
+      </div>
+      <div style="text-align:right;flex:none;">
+        <div style="font-size:12px;color:#A4A9B5;">{{ reportDate }}</div>
+        <div style="font-size:12px;color:#A4A9B5;margin-top:4px;">{{ sectorLabel }}</div>
+        <div style="font-size:12px;color:#A4A9B5;margin-top:4px;">{{ teamSizeLabel }} sur le terrain</div>
+      </div>
+    </div>
+
+    <div style="padding:30px 0;border-bottom:1px solid #ECEEF5;">
+      <div style="font-size:13px;color:#687083;margin-bottom:8px;">Gain annuel estimé</div>
+      <div class="roi-bignum" style="font-size:52px;line-height:1;font-weight:800;letter-spacing:-0.04em;color:#3D52D5;">{{ totalLabel }}</div>
+      <div style="display:flex;gap:24px;margin-top:14px;">
+        <span style="font-size:14px;color:#687083;">≈ <strong style="color:#111;">{{ hoursLabel }}</strong> récupérées / an</span>
+        <span style="font-size:14px;color:#687083;">≈ <strong style="color:#111;">{{ etpLabel }}</strong> équivalent temps plein</span>
+      </div>
+    </div>
+
+    <div style="padding:28px 0;">
+      <div style="font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#A4A9B5;margin-bottom:18px;">Détail par processus</div>
+      <div style="display:flex;flex-direction:column;gap:18px;">
+        <sc-for list="{{ reportRows }}" as="r" hint-placeholder-count="3">
+          <div style="display:flex;gap:16px;align-items:flex-start;">
+            <div style="width:36px;height:36px;border-radius:9px;flex:none;display:flex;align-items:center;justify-content:center;background:#EFF1FC;color:#3D52D5;padding:8px;">{{ r.icon }}</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;">
+                <span style="font-size:15px;font-weight:700;color:#111;">{{ r.title }}</span>
+                <span style="font-size:16px;font-weight:800;color:#111;font-variant-numeric:tabular-nums;">{{ r.eurosLabel }}</span>
+              </div>
+              <p style="font-size:12.5px;line-height:1.5;color:#687083;margin:5px 0 0;">{{ r.assumptions }}</p>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="padding:18px 20px;border-radius:10px;background:#F9FAFB;border:1px solid #ECEEF5;margin-bottom:28px;">
+      <div style="font-size:12px;font-weight:700;color:#111;margin-bottom:4px;">Hypothèses de calcul</div>
+      <p style="font-size:12px;line-height:1.5;color:#687083;margin:0;">Coût horaire chargé&nbsp;: {{ hourlyCost }} €/h · 47 semaines et 220 jours travaillés par an. Estimation indicative établie à partir des réponses fournies — à affiner lors d'un échange.</p>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:20px;padding:24px;border-radius:12px;background:#3D52D5;">
+      <div>
+        <div style="font-size:17px;font-weight:800;color:#fff;letter-spacing:-0.01em;">Validons ces chiffres ensemble.</div>
+        <div style="font-size:13px;color:#CFD6FF;margin-top:3px;">20 minutes avec un expert Komin, sans engagement.</div>
+      </div>
+      <a href="{{ calendlyUrl }}" target="_blank" rel="noopener" style="flex:none;display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 22px;border-radius:8px;background:#fff;font-size:14px;font-weight:700;color:#3D52D5;text-decoration:none;">Prendre rendez-vous</a>
+    </div>
+
+    <div style="margin-top:24px;text-align:center;font-size:11px;color:#A4A9B5;">komin.io · Digitalisez vos opérations terrain</div>
+  </div>
+
+  <!-- PAGE 2 — MÉTHODE & HYPOTHÈSES -->
+  <div class="roi-report" style="page-break-before:always;break-before:page;max-width:760px;margin:16px auto 0;background:#fff;border:1px solid #ECEEF5;border-radius:12px;padding:48px;box-shadow:0 8px 16px -4px rgba(24,24,25,.08);">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding-bottom:20px;border-bottom:2px solid #111;">
+      <div>
+        <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#3D52D5;margin-bottom:6px;">Méthode &amp; hypothèses</div>
+        <h1 style="font-size:24px;line-height:1.15;font-weight:800;letter-spacing:-0.03em;color:#111;margin:0;">Comment ce chiffre est calculé</h1>
+      </div>
+      <span style="color:#3D52D5;display:flex;flex:none;">{{ kominLogoReport }}</span>
+    </div>
+
+    <!-- Bases communes -->
+    <div style="padding:26px 0;border-bottom:1px solid #ECEEF5;">
+      <div style="font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#A4A9B5;margin-bottom:14px;">Bases communes à tous les processus</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="display:flex;gap:10px;padding:14px 16px;border-radius:10px;background:#F9FAFB;border:1px solid #ECEEF5;">
+          <div style="font-size:22px;font-weight:800;color:#3D52D5;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap;flex:none;">{{ hourlyCost }} €</div>
+          <div style="font-size:12.5px;line-height:1.4;color:#687083;align-self:center;">Coût horaire chargé (salaire + charges + frais), ajustable.</div>
+        </div>
+        <div style="display:flex;gap:10px;padding:14px 16px;border-radius:10px;background:#F9FAFB;border:1px solid #ECEEF5;">
+          <div style="font-size:22px;font-weight:800;color:#3D52D5;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap;flex:none;">47 / 220</div>
+          <div style="font-size:12.5px;line-height:1.4;color:#687083;align-self:center;">Semaines et jours travaillés par an, congés et absences déduits.</div>
+        </div>
+      </div>
+      <p style="font-size:12.5px;line-height:1.55;color:#687083;margin:14px 0 0;">Chaque processus convertit un temps perdu (ou un surcoût) en gain annuel. Les gains en temps sont valorisés au coût horaire ci-dessus ; la remontée terrain produit un gain en euros directs, indépendant de ce taux. Tous les chiffres restent des estimations prudentes, à affiner ensemble.</p>
+    </div>
+
+    <!-- Calibrage secteur -->
+    <div style="padding:26px 0;border-bottom:1px solid #ECEEF5;">
+      <div style="font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#A4A9B5;margin-bottom:12px;">Calibrage selon votre secteur</div>
+      <div style="display:flex;gap:14px;align-items:flex-start;padding:16px 18px;border-radius:10px;background:#EFF1FC;">
+        <span style="display:flex;width:18px;height:18px;flex:none;color:#3D52D5;margin-top:1px;">{{ infoIcon }}</span>
+        <div>
+          <div style="font-size:14px;font-weight:700;color:#111;margin-bottom:4px;">{{ sectorLabel }}</div>
+          <div style="font-size:13px;line-height:1.5;color:#2C41C4;">{{ sectorNote }}</div>
+        </div>
+      </div>
+      <p style="font-size:12px;line-height:1.5;color:#A4A9B5;margin:12px 0 0;">Le secteur calibre les ordres de grandeur proposés par défaut (taille d’équipe, fréquences, durées). Vos réponses restent prioritaires : le calcul repose sur les valeurs que vous avez saisies.</p>
+    </div>
+
+    <!-- Règles par processus -->
+    <div style="padding:26px 0 0;">
+      <div style="font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#A4A9B5;margin-bottom:18px;">Règle de calcul par processus</div>
+      <div style="display:flex;flex-direction:column;gap:22px;">
+        <sc-for list="{{ methodRows }}" as="mr" hint-placeholder-count="3">
+          <div style="border:1px solid #ECEEF5;border-radius:12px;padding:22px;break-inside:avoid;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;">
+              <div style="display:flex;align-items:center;gap:12px;">
+                <div style="width:34px;height:34px;border-radius:9px;flex:none;display:flex;align-items:center;justify-content:center;background:#EFF1FC;color:#3D52D5;padding:8px;">{{ mr.icon }}</div>
+                <span style="font-size:16px;font-weight:700;color:#111;letter-spacing:-0.01em;">{{ mr.title }}</span>
+              </div>
+              <span style="font-size:15px;font-weight:800;color:#3D52D5;font-variant-numeric:tabular-nums;flex:none;">{{ mr.eurosLabel }}</span>
+            </div>
+            <div style="font-size:13px;line-height:1.5;color:#111;background:#F9FAFB;border:1px solid #ECEEF5;border-radius:8px;padding:11px 14px;margin-bottom:14px;font-weight:600;">{{ mr.formula }}</div>
+            <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:12px;">
+              <sc-for list="{{ mr.steps }}" as="sp" hint-placeholder-count="3">
+                <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;font-size:13px;">
+                  <span style="color:#687083;">{{ sp.k }}</span>
+                  <span style="color:#111;font-weight:700;font-variant-numeric:tabular-nums;text-align:right;">{{ sp.val }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <p style="font-size:12.5px;line-height:1.55;color:#687083;margin:0;">{{ mr.note }}</p>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="margin-top:28px;text-align:center;font-size:11px;color:#A4A9B5;">komin.io · Méthode de calcul — estimation indicative, à valider ensemble</div>
+  </div>
+</div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1180,&quot;height&quot;:820},&quot;hourlyCostDefault&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:35,&quot;min&quot;:15,&quot;max&quot;:90,&quot;tsType&quot;:&quot;number&quot;},&quot;calendlyUrl&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;https://calendly.com/komin/demo&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;teaseResult&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    this.state = {
+      step:'qualif', view:'app',
+      sector:'', teamSize:50, selected:[], inputs:{},
+      hourlyCost: (props && props.hourlyCostDefault) || 35,
+      firstName:'', email:'', emailTouched:false, submitted:false,
+    };
+  }
+
+  svg(html){ return React.createElement('svg',{viewBox:'0 0 24 24',fill:'none',stroke:'currentColor','strokeWidth':1.7,'strokeLinecap':'round','strokeLinejoin':'round',width:'100%',height:'100%',dangerouslySetInnerHTML:{__html:html}}); }
+
+  kominLogo(h){
+    const P=['M 0 52.38 L 0 0.54 L 6.408 0.54 L 6.408 24.876 L 29.088 0.54 L 37.152 0.54 L 13.608 25.704 L 38.988 52.38 L 30.708 52.38 L 6.408 27.036 L 6.408 52.38 L 0 52.38 Z','M 61.293 53.46 C 57.429 53.46 54.093 52.584 51.285 50.832 C 48.501 49.08 46.353 46.656 44.841 43.56 C 43.329 40.464 42.573 36.912 42.573 32.904 C 42.573 28.824 43.341 25.248 44.877 22.176 C 46.413 19.104 48.585 16.716 51.393 15.012 C 54.201 13.284 57.501 12.42 61.293 12.42 C 65.181 12.42 68.529 13.296 71.337 15.048 C 74.145 16.776 76.293 19.188 77.781 22.284 C 79.293 25.356 80.049 28.896 80.049 32.904 C 80.049 36.96 79.293 40.536 77.781 43.632 C 76.269 46.704 74.109 49.116 71.301 50.868 C 68.493 52.596 65.157 53.46 61.293 53.46 Z M 61.293 47.376 C 65.325 47.376 68.325 46.032 70.293 43.344 C 72.261 40.656 73.245 37.176 73.245 32.904 C 73.245 28.512 72.249 25.02 70.257 22.428 C 68.265 19.812 65.277 18.504 61.293 18.504 C 58.581 18.504 56.349 19.116 54.597 20.34 C 52.845 21.564 51.537 23.256 50.673 25.416 C 49.809 27.576 49.377 30.072 49.377 32.904 C 49.377 37.272 50.385 40.776 52.401 43.416 C 54.417 46.056 57.381 47.376 61.293 47.376 Z','M 138.051 52.38 L 138.087 27.504 C 138.087 24.6 137.307 22.332 135.747 20.7 C 134.211 19.044 132.207 18.216 129.735 18.216 C 128.295 18.216 126.927 18.552 125.631 19.224 C 124.335 19.872 123.279 20.904 122.463 22.32 C 121.647 23.712 121.239 25.5 121.239 27.684 L 117.855 26.316 C 117.807 23.556 118.371 21.144 119.547 19.08 C 120.747 16.992 122.379 15.372 124.443 14.22 C 126.507 13.068 128.835 12.492 131.427 12.492 C 135.483 12.492 138.675 13.728 141.003 16.2 C 143.331 18.648 144.495 21.948 144.495 26.1 L 144.459 52.38 L 138.051 52.38 Z M 91.539 52.38 L 91.539 13.5 L 97.263 13.5 L 97.263 23.904 L 97.983 23.904 L 97.983 52.38 L 91.539 52.38 Z M 114.831 52.38 L 114.867 27.756 C 114.867 24.78 114.099 22.452 112.563 20.772 C 111.027 19.068 108.987 18.216 106.443 18.216 C 103.923 18.216 101.883 19.08 100.323 20.808 C 98.763 22.536 97.983 24.828 97.983 27.684 L 94.599 25.668 C 94.599 23.148 95.199 20.892 96.399 18.9 C 97.599 16.908 99.231 15.348 101.295 14.22 C 103.359 13.068 105.699 12.492 108.315 12.492 C 110.931 12.492 113.211 13.044 115.155 14.148 C 117.099 15.252 118.599 16.836 119.655 18.9 C 120.711 20.94 121.239 23.376 121.239 26.208 L 121.203 52.38 L 114.831 52.38 Z','M 158.192 6.624 L 158.192 0 L 164.6 0 L 164.6 6.624 L 158.192 6.624 Z M 158.192 52.38 L 158.192 13.5 L 164.6 13.5 L 164.6 52.38 L 158.192 52.38 Z','M 206.686 52.38 L 206.686 32.904 C 206.686 31.056 206.518 29.28 206.182 27.576 C 205.87 25.872 205.306 24.348 204.49 23.004 C 203.698 21.636 202.618 20.556 201.25 19.764 C 199.906 18.972 198.202 18.576 196.138 18.576 C 194.53 18.576 193.066 18.852 191.746 19.404 C 190.45 19.932 189.334 20.748 188.398 21.852 C 187.462 22.956 186.73 24.348 186.202 26.028 C 185.698 27.684 185.446 29.64 185.446 31.896 L 181.234 30.6 C 181.234 26.832 181.906 23.604 183.25 20.916 C 184.618 18.204 186.526 16.128 188.974 14.688 C 191.446 13.224 194.35 12.492 197.686 12.492 C 200.206 12.492 202.354 12.888 204.13 13.68 C 205.906 14.472 207.382 15.528 208.558 16.848 C 209.734 18.144 210.658 19.608 211.33 21.24 C 212.002 22.848 212.47 24.492 212.734 26.172 C 213.022 27.828 213.166 29.4 213.166 30.888 L 213.166 52.38 L 206.686 52.38 Z M 178.966 52.38 L 178.966 13.5 L 184.726 13.5 L 184.726 23.904 L 185.446 23.904 L 185.446 52.38 L 178.966 52.38 Z','M 227.277 52.38 L 227.277 45.324 L 234.333 45.324 L 234.333 52.38 L 227.277 52.38 Z','M 249.851 6.624 L 249.851 0 L 256.259 0 L 256.259 6.624 L 249.851 6.624 Z M 249.851 52.38 L 249.851 13.5 L 256.259 13.5 L 256.259 52.38 L 249.851 52.38 Z','M 287.221 53.46 C 283.357 53.46 280.021 52.584 277.213 50.832 C 274.429 49.08 272.281 46.656 270.769 43.56 C 269.257 40.464 268.501 36.912 268.501 32.904 C 268.501 28.824 269.269 25.248 270.805 22.176 C 272.341 19.104 274.513 16.716 277.321 15.012 C 280.129 13.284 283.429 12.42 287.221 12.42 C 291.109 12.42 294.457 13.296 297.265 15.048 C 300.073 16.776 302.221 19.188 303.709 22.284 C 305.221 25.356 305.977 28.896 305.977 32.904 C 305.977 36.96 305.221 40.536 303.709 43.632 C 302.197 46.704 300.037 49.116 297.229 50.868 C 294.421 52.596 291.085 53.46 287.221 53.46 Z M 287.221 47.376 C 291.253 47.376 294.253 46.032 296.221 43.344 C 298.189 40.656 299.173 37.176 299.173 32.904 C 299.173 28.512 298.177 25.02 296.185 22.428 C 294.193 19.812 291.205 18.504 287.221 18.504 C 284.509 18.504 282.277 19.116 280.525 20.34 C 278.773 21.564 277.465 23.256 276.601 25.416 C 275.737 27.576 275.305 30.072 275.305 32.904 C 275.305 37.272 276.313 40.776 278.329 43.416 C 280.345 46.056 283.309 47.376 287.221 47.376 Z'];
+    return React.createElement('svg',{viewBox:'0 0 305.977 53.46',fill:'currentColor',style:{height:(h||24)+'px',width:'auto',display:'block'}}, P.map((d,i)=>React.createElement('path',{key:i,d})));
+  }
+
+  MODULES(){
+    const I = (h)=>this.svg(h);
+    return [
+      { id:'instructions', title:'Instructions de travail',
+        desc:'Procédures et modes opératoires à jour, accessibles au poste.',
+        fact:"Un opérateur passe en moyenne 45 min/semaine à chercher la bonne procédure. Sur 50 opérateurs, c'est 1 950 h perdues par an.",
+        icon:I('<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/>'),
+        def:(ts)=>({a:ts,b:45,c:70}),
+        calc:(v,h)=>{const hours=v.a*(v.b/60)*47*(v.c/100);return{hours,euros:hours*h};},
+        inputs:[
+          {key:'a',label:'Opérateurs concernés',unit:'opérateurs',min:1,max:500,step:1,hint:"Toutes les personnes qui suivent des procédures sur le terrain."},
+          {key:'b',label:"Temps perdu à chercher la bonne procédure",unit:'min/sem',min:0,max:180,step:5,hint:"Chercher la bonne version, valider, faire des allers-retours bureau / atelier."},
+          {key:'c',label:'Part des instructions digitalisées avec Komin (sur 12 mois)',unit:'%',min:0,max:100,step:5,hint:"Repère : avec Komin, un utilisateur à temps plein crée 10 instructions par semaine. Un opérateur terrain qui s'en occupe en parallèle en crée 10 en 6 mois, sans impacter ses autres missions."},
+        ]},
+      { id:'accueil', title:'Accueil sécurité',
+        desc:"Parcours d'accueil sécurité digital pour chaque nouvel entrant.",
+        fact:"60 % des accidents terrain surviennent dans les 6 premiers mois à un nouveau poste. Un accueil digitalisé réduit ce risque d'environ 40 %.",
+        icon:I('<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>'),
+        def:(ts)=>({a:Math.max(1,Math.round(ts*0.25)),b:2,c:50}),
+        calc:(v,h)=>{const hours=v.a*v.b*(v.c/100)*2;return{hours,euros:hours*h};},
+        inputs:[
+          {key:'a',label:'Nouveaux entrants par an',unit:'entrants/an',min:0,max:500,step:1,hint:"Embauches, intérimaires et sous-traitants qui passent l'accueil sécurité."},
+          {key:'b',label:"Durée d'un accueil sécurité",unit:'h',min:0.5,max:4,step:0.5,hint:"Un accueil sécurité papier dure en moyenne 2 h par entrant."},
+          {key:'c',label:'Part des accueils réalisables à distance',unit:'%',min:0,max:100,step:5,hint:"Séparez la partie théorique (faisable à distance, en autonomie) de la partie pratique sur site — ou estimez selon les équipes qui peuvent suivre l'accueil à distance."},
+        ]},
+      { id:'ged', title:'GED — Gestion documentaire',
+        desc:'Tous vos documents centralisés, versionnés et cherchables.',
+        fact:"Les employés passent 1,8 h par jour à chercher de l'information (McKinsey, 2012). Sur un site de 30 personnes, c'est l'équivalent de 5 ETP perdus par an.",
+        icon:I('<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>'),
+        def:(ts)=>({a:ts,b:60,c:6,d:'Non, pas encore'}),
+        calc:(v,h)=>{const coef=(v.d&&v.d.indexOf('Oui')===0)?0.20:0.40;const fm=Math.max(0.8,Math.min(1.2,1+(6-v.c)*0.02));const hours=v.a*(v.b/60)*220*coef*fm;return{hours,euros:hours*h};},
+        inputs:[
+          {key:'a',label:'Personnes concernées',unit:'personnes',min:1,max:500,step:1,hint:"Tous ceux qui consultent des documents : plans, fiches, comptes-rendus."},
+          {key:'b',label:"Temps de recherche d'info par jour",unit:'min/jour',min:0,max:180,step:5,hint:"McKinsey mesure 1,8 h/jour. On part volontairement plus bas."},
+          {key:'c',label:'Fréquence de mise à jour / revue de la documentation',unit:'mois',min:1,max:36,step:1,hint:"Tous les combien de mois la documentation est revue ou mise à jour. Plus c'est fréquent, plus le risque de version périmée pèse lourd."},
+          {key:'d',type:'select',label:'Une GED est-elle déjà en place ?',options:['Non, pas encore','Oui, déjà en place'],hint:"Hypothèse clé de temps récupéré : 40 % si aucune GED n'existe, 20 % si une GED est déjà en place."},
+        ]},
+      { id:'remontee', title:'Remontée terrain',
+        desc:'Signalement mobile des anomalies et presque-accidents.',
+        fact:"70 % des non-conformités détectées tardivement auraient pu être signalées 2 à 4 semaines plus tôt avec un outil de remontée mobile.",
+        icon:I('<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>'),
+        def:()=>({a:8,b:800,c:40}),
+        calc:(v)=>{const euros=v.a*12*v.b*(v.c/100);return{hours:0,euros};},
+        inputs:[
+          {key:'a',label:'Non-conformités / incidents par mois',unit:'incidents/mois',min:0,max:100,step:1,hint:"Anomalies, presque-accidents et dérives qualité signalés."},
+          {key:'b',label:"Coût moyen d'une détection tardive",unit:'€',min:0,max:5000,step:100,hint:"Reprise, rebut, arrêt, sanction… quand c'est vu trop tard."},
+          {key:'c',label:'Part évitable avec une remontée en temps réel',unit:'%',min:0,max:90,step:5,hint:"Signalé en temps réel depuis le terrain plutôt que 2 à 4 semaines plus tard : l'essentiel du coût est évité."},
+        ]},
+      { id:'audit', title:'Audit terrain',
+        desc:'Audits, inspections et rondes réalisés et restitués sur place.',
+        fact:"Un auditeur terrain passe en moyenne 3 h à rédiger son rapport après chaque audit. Avec un outil digital : moins de 20 minutes.",
+        icon:I('<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/>'),
+        def:(ts)=>({a:Math.max(2,Math.round(ts*1.2)),b:3,c:60}),
+        calc:(v,h)=>{const redacSaved=Math.max(0,v.b-0.33);const hours=v.a*(redacSaved+v.c/60);return{hours,euros:hours*h};},
+        inputs:[
+          {key:'a',label:'Audits / inspections par an',unit:'audits/an',min:0,max:1000,step:5,hint:"Tournées sécurité, audits 5S, contrôles qualité, rondes."},
+          {key:'b',label:'Temps passé à répondre aux audits',unit:'h',min:0,max:6,step:0.5,hint:"Préparer les preuves, rassembler les documents, rédiger les réponses. Komin centralise tout et réduit fortement ce temps."},
+          {key:'c',label:'Temps de retraitement manuel par audit',unit:'min',min:0,max:240,step:5,hint:"Ressaisie, mise en forme et consolidation des constats (Excel, rapports). Supprimé avec une saisie directe sur le terrain."},
+        ]},
+    ];
+  }
+
+  grp(n){ return new Intl.NumberFormat('fr-FR').format(n); }
+  fmtEur(n){ return this.grp(Math.round(n/100)*100)+' €'; }
+  fmtH(n){ return this.grp(Math.round(n/10)*10)+' h'; }
+  num(v){ return String(v).replace('.',','); }
+
+  displayValue(inp){
+    if(inp.type==='select') return inp.value;
+    const v=inp.value;
+    if(inp.unit==='%') return v+' %';
+    if(inp.unit==='€') return this.grp(v)+' €';
+    if(inp.unit==='h') return this.num(v)+' h';
+    if(inp.unit==='min/sem') return v+' min/sem';
+    if(inp.unit==='min/jour') return v+' min/jour';
+    if(inp.unit==='min') return v+' min';
+    if(inp.unit==='mois') return v>=12&&v%12===0?('tous les '+(v/12)+' an'+(v/12>1?'s':'')):('tous les '+v+' mois');
+    return this.grp(v)+' '+inp.unit;
+  }
+  track(inp){
+    if(inp.type==='select') return '';
+    const pct=Math.max(0,Math.min(100,((inp.value-inp.min)/(inp.max-inp.min))*100));
+    return 'linear-gradient(90deg,#3D52D5 '+pct+'%,#ECEEF5 '+pct+'%)';
+  }
+
+  compute(){
+    const sel=this.state.selected, h=this.state.hourlyCost;
+    let totalE=0, totalH=0; const bd=[];
+    for(const m of this.MODULES()){
+      if(!sel.includes(m.id)) continue;
+      const v=this.state.inputs[m.id]||m.def(this.state.teamSize);
+      const r=m.calc(v,h);
+      totalE+=r.euros; totalH+=r.hours;
+      bd.push({m,v,euros:r.euros,hours:r.hours});
+    }
+    bd.sort((a,b)=>b.euros-a.euros);
+    return {bd,totalE,totalH};
+  }
+
+  deriveCompany(){
+    const m=/@([^@\s]+)$/.exec(this.state.email||'');
+    if(!m) return 'Votre entreprise';
+    let d=m[1].split('.')[0].replace(/[-_]+/g,' ').trim();
+    if(!d) return 'Votre entreprise';
+    return d.replace(/\b\w/g,c=>c.toUpperCase());
+  }
+  emailValid(){ return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(this.state.email) && this.state.firstName.trim().length>0; }
+
+  goQuestions(){
+    const ns={...this.state.inputs};
+    for(const m of this.MODULES()){ if(this.state.selected.includes(m.id) && !ns[m.id]) ns[m.id]={...m.def(this.state.teamSize)}; }
+    this.setState({inputs:ns, step:'questions'});
+  }
+  setStep(s){ this.setState({step:s}); }
+
+  renderVals(){
+    const st=this.state;
+    const {bd,totalE,totalH}=this.compute();
+    const order=['qualif','questions','result','email','confirm'];
+    const labels=['Qualification','Vos usages','Résultat','Coordonnées','Confirmation'];
+    const curIdx = st.step==='email' ? 3 : order.indexOf(st.step);
+    const reached = (i)=> i<=curIdx;
+    const canQualif = st.sector && st.selected.length>0;
+
+    const progressSteps = labels.map((label,i)=>{
+      const done = i<curIdx;
+      const current = i===curIdx;
+      const clickable = i<=2 && i<curIdx && (i===0 || canQualif);
+      return {
+        n:String(i+1), label, idx:i,
+        done, notDone:!done, current,
+        showLine: i>0,
+        lineColor: i<=curIdx ? '#3D52D5' : '#ECEEF5',
+        cBg: current?'#3D52D5':(done?'#EFF1FC':'#fff'),
+        cFg: current?'#fff':(done?'#3D52D5':'#A4A9B5'),
+        cBorder: current?'#3D52D5':(done?'#EFF1FC':'#E0E2E6'),
+        lblColor: (current||done)?'#111':'#A4A9B5',
+        cursor: clickable?'pointer':'default',
+        onClick: clickable ? ()=>this.setStep(order[i]) : ()=>{},
+      };
+    });
+
+    const moduleCards = this.MODULES().map(m=>{
+      const sel=st.selected.includes(m.id);
+      return { id:m.id, title:m.title, desc:m.desc, icon:m.icon, selected:sel,
+        bg: sel?'#F7F8FF':'#fff', border: sel?'#3D52D5':'#ECEEF5',
+        iconBg: sel?'#3D52D5':'#EFF1FC', iconFg: sel?'#fff':'#3D52D5',
+        checkBg: sel?'#3D52D5':'#fff', checkBorder: sel?'#3D52D5':'#CDD2DE',
+        onToggle:()=>{ const cur=this.state.selected||[]; const next= cur.includes(m.id)?cur.filter(x=>x!==m.id):cur.concat([m.id]); this.setState({selected: next}); } };
+    });
+
+    const sections = this.MODULES().filter(m=>st.selected.includes(m.id)).map(m=>{
+      const vals=st.inputs[m.id]||m.def(st.teamSize);
+      return { id:m.id, title:m.title, desc:m.desc, icon:m.icon, fact:m.fact,
+        inputs: m.inputs.map(inp=>{ const o={...inp, value:vals[inp.key]}; o.isSelect=inp.type==='select'; o.isSlider=!o.isSelect; o.displayValue=this.displayValue(o); o.track=this.track(o); return o; }) };
+    });
+
+    const maxE = bd.length? Math.max(...bd.map(b=>b.euros),1) : 1;
+    const breakdown = bd.map(b=>({ id:b.m.id, title:b.m.title, icon:b.m.icon, euros:b.euros,
+      eurosLabel:this.fmtEur(b.euros), pct: Math.max(3,Math.round((b.euros/maxE)*100)) }));
+
+    const reportRows = bd.map(b=>({ id:b.m.id, title:b.m.title, icon:b.m.icon, eurosLabel:this.fmtEur(b.euros),
+      assumptions: b.m.inputs.map(inp=>{ const o={...inp,value:b.v[inp.key]}; return inp.label+' : '+this.displayValue(o); }).join('  ·  ') }));
+
+    // ── Méthode de calcul : formule lisible + variables par processus sélectionné ──
+    const dv=(inp,val)=>this.displayValue({...inp,value:val});
+    const METHOD={
+      instructions:(v,m)=>({
+        formula:'Opérateurs × temps de recherche hebdo × 47 semaines × part digitalisée × coût horaire',
+        steps:[
+          {k:'Opérateurs concernés', val:this.grp(v.a)},
+          {k:'Temps perdu / semaine', val:dv(m.inputs[1],v.b)},
+          {k:'Semaines travaillées', val:'47 / an'},
+          {k:'Part digitalisée avec Komin', val:v.c+' %'},
+        ],
+        note:"Le temps passé à chercher la bonne procédure est récupéré au prorata de ce qui est digitalisé sur 12 mois.",
+      }),
+      accueil:(v,m)=>({
+        formula:'Nouveaux entrants × durée d’accueil × part réalisable à distance × facteur de gain × coût horaire',
+        steps:[
+          {k:'Nouveaux entrants / an', val:this.grp(v.a)},
+          {k:'Durée d’un accueil', val:dv(m.inputs[1],v.b)},
+          {k:'Part réalisable à distance', val:v.c+' %'},
+          {k:'Facteur de gain appliqué', val:'×2 (préparation + animation évitées)'},
+        ],
+        note:"On compte le temps de l’entrant et celui de l’encadrant : la partie théorique passée en autonomie libère les deux côtés.",
+      }),
+      ged:(v,m)=>{
+        const coefOui=(v.d&&v.d.indexOf('Oui')===0);
+        const fm=Math.max(0.8,Math.min(1.2,1+(6-v.c)*0.02));
+        return {
+        formula:'Personnes × temps de recherche / jour × 220 jours × taux de récupération × facteur de fraîcheur × coût horaire',
+        steps:[
+          {k:'Personnes concernées', val:this.grp(v.a)},
+          {k:'Recherche d’info / jour', val:dv(m.inputs[1],v.b)},
+          {k:'Jours travaillés', val:'220 / an'},
+          {k:'Taux de temps récupéré', val:(coefOui?'20 %':'40 %')+(coefOui?' (GED déjà en place)':' (aucune GED)')},
+          {k:'Facteur de fraîcheur doc.', val:'×'+this.num(Number(fm.toFixed(2)))+' (revue tous les '+v.c+' mois)'},
+        ],
+        note:"Le taux de récupération est l’hypothèse clé : 40 % sans GED, 20 % si une GED existe déjà. Une documentation revue rarement augmente le risque de version périmée (facteur jusqu’à ×1,2).",
+      };},
+      remontee:(v,m)=>({
+        formula:'Incidents / mois × 12 × coût d’une détection tardive × part évitable',
+        steps:[
+          {k:'Incidents / mois', val:this.grp(v.a)},
+          {k:'Coût d’une détection tardive', val:this.grp(v.b)+' €'},
+          {k:'Part évitable en temps réel', val:v.c+' %'},
+        ],
+        note:"Gain en euros directs (reprise, rebut, arrêt, sanction), indépendant du coût horaire : signaler en temps réel évite l’essentiel du surcoût d’une détection 2 à 4 semaines trop tard.",
+      }),
+      audit:(v,m)=>({
+        formula:'Audits / an × (temps de réponse économisé + retraitement manuel évité) × coût horaire',
+        steps:[
+          {k:'Audits / inspections / an', val:this.grp(v.a)},
+          {k:'Temps de réponse / audit', val:dv(m.inputs[1],v.b)+' → 20 min'},
+          {k:'Retraitement manuel évité', val:dv(m.inputs[2],v.c)},
+        ],
+        note:"La rédaction passe d’environ "+this.num(v.b)+" h à 20 min par audit, et la ressaisie est supprimée par la saisie directe sur le terrain.",
+      }),
+    };
+    const methodRows = bd.map(b=>{ const f=METHOD[b.m.id]; const o=f?f(b.v,b.m):{formula:'',steps:[],note:''};
+      return { id:b.m.id, title:b.m.title, icon:b.m.icon, eurosLabel:this.fmtEur(b.euros), formula:o.formula, steps:o.steps, note:o.note }; });
+
+    const SECTOR_NOTES={
+      'Industrie / production':'Forte densité d’instructions et d’audits qualité : les gains se concentrent sur les procédures et la remontée terrain.',
+      'BTP / construction':'Main-d’œuvre mobile et intérim élevé : l’accueil sécurité et la GED de chantier pèsent le plus.',
+      'Logistique & supply chain':'Volume de remontées et de contrôles important : la détection en temps réel domine.',
+      'Agroalimentaire':'Contraintes HACCP et traçabilité : audits et documentation sont les postes prioritaires.',
+      'Énergie & utilities':'Exigences réglementaires fortes : accueil sécurité et audits structurent le calcul.',
+      'Maintenance & services':'Équipes nomades multi-sites : instructions de travail et GED concentrent les gains.',
+      'Propreté / facility management':'Turnover élevé et multi-sites : l’accueil sécurité et les rondes/audits dominent.',
+      'Autre':'Calibrage neutre : les ordres de grandeur reposent uniquement sur vos réponses.',
+    };
+    const sectorNote = SECTOR_NOTES[st.sector] || SECTOR_NOTES['Autre'];
+    const tease = (this.props.teaseResult ?? true);
+
+    const etp = totalH/1600;
+    const onInput=(e)=>{ const id=e.target.dataset.mod,k=e.target.dataset.key,val=parseFloat(e.target.value);
+      const cur=this.state.inputs; this.setState({inputs:{...cur,[id]:{...(cur[id]||{}),[k]:val}}}); };
+    const onSelectInput=(e)=>{ const id=e.target.dataset.mod,k=e.target.dataset.key,val=e.target.value;
+      const cur=this.state.inputs; this.setState({inputs:{...cur,[id]:{...(cur[id]||{}),[k]:val}}}); };
+
+    return {
+      // view flags
+      isApp: st.view==='app', isReport: st.view==='report',
+      isQualif: st.step==='qualif', isQuestions: st.step==='questions',
+      isResult: st.step==='result'||st.step==='email', isEmailModal: st.step==='email',
+      isConfirm: st.step==='confirm',
+      // icons
+      kominLogo:this.kominLogo(24),
+      kominLogoReport:this.kominLogo(26),
+      checkIcon:this.svg('<path d="M20 6 9 17l-5-5"/>'),
+      bigCheckIcon:this.svg('<path d="M20 6 9 17l-5-5"/>'),
+      arrowIcon:this.svg('<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>'),
+      lockIcon:this.svg('<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>'),
+      bulbIcon:this.svg('<path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/>'),
+      infoIcon:this.svg('<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>'),
+      mailIcon:this.svg('<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>'),
+      xIcon:this.svg('<path d="M18 6 6 18"/><path d="m6 6 12 12"/>'),
+      calendarIcon:this.svg('<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>'),
+      downloadIcon:this.svg('<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/>'),
+      // qualif
+      sectors:['Industrie / production','BTP / construction','Logistique & supply chain','Agroalimentaire','Énergie & utilities','Maintenance & services','Propreté / facility management','Autre'],
+      sector:st.sector, onSector:(e)=>this.setState({sector:e.target.value}),
+      teamSize:st.teamSize, teamSizeLabel: st.teamSize>=500?'500 + personnes':st.teamSize+' personnes',
+      onTeamSize:(e)=>this.setState({teamSize:parseInt(e.target.value,10)}),
+      teamTrack: this.track({value:st.teamSize,min:1,max:500}),
+      moduleCards, progressSteps,
+      qualifDisabled: !canQualif, qualifHint: canQualif?'Tout est prêt.':'Choisissez un secteur et au moins un processus.',
+      nextBg: canQualif?'#3D52D5':'#CDD2DE', nextCursor: canQualif?'pointer':'not-allowed',
+      goQuestions:()=>{ if(canQualif) this.goQuestions(); },
+      // questions
+      sections, onInput, onSelectInput,
+      backToQualif:()=>this.setStep('qualif'),
+      goResult:()=>this.setStep('result'),
+      // result
+      totalLabel:this.fmtEur(totalE),
+      hoursLabel:this.fmtH(totalH),
+      etpLabel: this.num(Number(etp.toFixed(1)))+' ETP',
+      breakdown,
+      hourlyCost:st.hourlyCost,
+      onHourly:(e)=>{ const v=parseFloat(e.target.value); this.setState({hourlyCost: isNaN(v)?1:Math.max(1,Math.min(120,v))}); },
+      heroBlur: (tease && !st.submitted)?'blur(9px)':'none',
+      showTease: (tease && !st.submitted),
+      teasePE: (tease && !st.submitted)?'none':'auto',
+      teaseItems:['Le détail chiffré, processus par processus','Nos hypothèses et la méthode de calcul complète','Le comparatif avant / après Komin','Les pistes concrètes de déploiement sur votre site'],
+      backToQuestions:()=>this.setStep('questions'),
+      openEmail:()=>this.setStep('email'),
+      // email
+      firstName:st.firstName, email:st.email,
+      onFirst:(e)=>this.setState({firstName:e.target.value}),
+      onEmail:(e)=>this.setState({email:e.target.value,emailTouched:true}),
+      emailBorder: (st.emailTouched && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(st.email))?'#E22020':'#E0E2E6',
+      showEmailError: (st.emailTouched && st.email.length>3 && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(st.email)),
+      submitDisabled: !this.emailValid(),
+      submitBg: this.emailValid()?'#3D52D5':'#CDD2DE', submitCursor: this.emailValid()?'pointer':'not-allowed',
+      submit:()=>{ if(this.emailValid()) this.setState({submitted:true,step:'confirm'}); },
+      closeEmail:()=>this.setStep('result'),
+      stop:(e)=>{ e.stopPropagation(); },
+      // confirm + report
+      calendlyUrl: this.props.calendlyUrl || 'https://calendly.com/komin/demo',
+      openReport:()=>this.setState({view:'report'}),
+      closeReport:()=>this.setState({view:'app'}),
+      printReport:()=>window.print(),
+      company:this.deriveCompany(),
+      sectorLabel: st.sector || '—',
+      reportRows, methodRows, sectorNote,
+      reportDate: new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}),
+    };
+  }
+}
+</script>
+</body>
+</html>
