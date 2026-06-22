@@ -77,7 +77,7 @@ const ICONS = {
 /* ── Module definitions ── */
 function getModules(){
   return [
-    { id:'instructions', title:'Instructions de travail',
+    { id:'instructions', title:'Production - Instructions de travail',
       desc:'Procédures et modes opératoires à jour, accessibles au poste.',
       fact:"Un opérateur passe en moyenne 45 min/semaine à chercher la bonne procédure. Sur 50 opérateurs, c'est 1 950 h perdues par an.",
       iconKey:'docs',
@@ -88,18 +88,18 @@ function getModules(){
         {key:'b',label:"Temps perdu à chercher la bonne procédure",unit:'min/sem',min:0,max:180,step:5,hint:"Chercher la bonne version, valider, faire des allers-retours bureau / atelier."},
         {key:'c',label:'Part des instructions digitalisées avec Komin (sur 12 mois)',unit:'%',min:0,max:100,step:5,hint:"Repère : avec Komin, un utilisateur à temps plein crée 10 instructions par semaine."},
       ]},
-    { id:'accueil', title:'Accueil sécurité',
+    { id:'accueil', title:'QHSE - Accueils sécurité',
       desc:"Parcours d'accueil sécurité digital pour chaque nouvel entrant.",
       fact:"60 % des accidents terrain surviennent dans les 6 premiers mois à un nouveau poste. Un accueil digitalisé réduit ce risque d'environ 40 %.",
       iconKey:'shield',
       def:(ts)=>({a:Math.max(1,Math.round(ts*0.25)),b:2,c:50}),
       calc:(v,h)=>{const hours=v.a*v.b*(v.c/100)*2;return{hours,euros:hours*h};},
       inputs:[
-        {key:'a',label:'Nouveaux entrants par an',unit:'entrants/an',min:0,max:500,step:1,hint:"Embauches, intérimaires et sous-traitants qui passent l'accueil sécurité."},
+        {key:'a',label:'Nombre de bénéficiaires chaque année',unit:'entrants/an',min:0,max:500,step:1,hint:"Embauches, intérimaires et sous-traitants qui passent l'accueil sécurité."},
         {key:'b',label:"Durée d'un accueil sécurité",unit:'h',min:0.5,max:4,step:0.5,hint:"Un accueil sécurité papier dure en moyenne 2 h par entrant."},
         {key:'c',label:'Part des accueils réalisables à distance',unit:'%',min:0,max:100,step:5,hint:"Séparez la partie théorique (faisable à distance) de la partie pratique sur site."},
       ]},
-    { id:'ged', title:'GED — Gestion documentaire',
+    { id:'ged', title:'Qualité - GED (Gestion Documentaire)',
       desc:'Tous vos documents centralisés, versionnés et cherchables.',
       fact:"Les employés passent 1,8 h par jour à chercher de l'information (McKinsey, 2012). Sur un site de 30 personnes, c'est l'équivalent de 5 ETP perdus par an.",
       iconKey:'folder',
@@ -111,7 +111,7 @@ function getModules(){
         {key:'c',label:'Fréquence de mise à jour / revue de la documentation',unit:'mois',min:1,max:36,step:1,hint:"Tous les combien de mois la documentation est revue ou mise à jour."},
         {key:'d',type:'select',label:'Une GED est-elle déjà en place ?',options:['Non, pas encore','Oui, déjà en place'],hint:"Hypothèse clé : 40 % si aucune GED, 20 % si une GED est déjà en place."},
       ]},
-    { id:'remontee', title:'Remontée terrain',
+    { id:'remontee', title:'Production/Maintenance - Remontées terrain',
       desc:'Signalement mobile des anomalies et presque-accidents.',
       fact:"70 % des non-conformités détectées tardivement auraient pu être signalées 2 à 4 semaines plus tôt avec un outil de remontée mobile.",
       iconKey:'warning',
@@ -122,7 +122,7 @@ function getModules(){
         {key:'b',label:"Coût moyen d'une détection tardive",unit:'€',min:0,max:5000,step:100,hint:"Reprise, rebut, arrêt, sanction… quand c'est vu trop tard."},
         {key:'c',label:'Part évitable avec une remontée en temps réel',unit:'%',min:0,max:90,step:5,hint:"Signalé en temps réel depuis le terrain plutôt que 2 à 4 semaines plus tard."},
       ]},
-    { id:'audit', title:'Audit terrain',
+    { id:'audit', title:'Managers - Audits terrain',
       desc:'Audits, inspections et rondes réalisés et restitués sur place.',
       fact:"Un auditeur terrain passe en moyenne 3 h à rédiger son rapport après chaque audit. Avec un outil digital : moins de 20 minutes.",
       iconKey:'clipboard',
@@ -133,6 +133,28 @@ function getModules(){
         {key:'b',label:'Temps passé à répondre aux audits',unit:'h',min:0,max:6,step:0.5,hint:"Préparer les preuves, rassembler les documents, rédiger les réponses."},
         {key:'c',label:'Temps de retraitement manuel par audit',unit:'min',min:0,max:240,step:5,hint:"Ressaisie, mise en forme et consolidation des constats (Excel, rapports)."},
       ]},
+    { id:'bonnes_pratiques', title:'Production/Maintenance - Bonnes pratiques',
+      desc:'Capitalisation et partage des savoir-faire et retours d\'expérience terrain.',
+      fact:"Les entreprises industrielles perdent en moyenne 20 % de leur savoir-faire opérationnel chaque année par départ ou mutation. Capitaliser les bonnes pratiques réduit de moitié ce transfert.",
+      iconKey:'bulb',
+      def:(ts)=>({a:ts,b:30,c:60}),
+      calc:(v,h)=>{const hours=v.a*(v.b/60)*47*(v.c/100);return{hours,euros:hours*h};},
+      inputs:[
+        {key:'a',label:'Opérateurs / techniciens concernés',unit:'personnes',min:1,max:500,step:1,hint:"Personnes qui produisent et consultent des retours d’expérience ou fiches de bonnes pratiques."},
+        {key:'b',label:"Temps perdu à partager ou retrouver une bonne pratique",unit:'min/sem',min:0,max:120,step:5,hint:"Temps passé à transmettre oralement ou à chercher un retour d’expérience existant."},
+        {key:'c',label:'Part des bonnes pratiques capitalisées avec Komin (sur 12 mois)',unit:'%',min:0,max:100,step:5,hint:"Restitution vidéo, fiche ou photo : chaque contenu créé reste accessible et cherchable."},
+      ]},
+    { id:'habilitations', title:'QHSE - Habilitations',
+      desc:'Suivi des habilitations, certifications et autorisations de conduite ou d\'accès.',
+      fact:"Une habilitation expirée non détectée peut entraîner un arrêt de poste, une non-conformité réglementaire ou un accident. Le suivi manuel génère en moyenne 2 à 4 h de gestion administrative par habilitation et par an.",
+      iconKey:'calendar',
+      def:(ts)=>({a:ts,b:3,c:2.5}),
+      calc:(v,h)=>{const hours=v.a*v.b*v.c;return{hours,euros:hours*h};},
+      inputs:[
+        {key:'a',label:'Salariés avec habilitations à suivre',unit:'personnes',min:1,max:500,step:1,hint:"Tous ceux qui ont au moins une habilitation, certification ou autorisation à renouveler."},
+        {key:'b',label:'Habilitations par personne en moyenne',unit:'habilitations',min:1,max:20,step:1,hint:"Électrique, conduite engins, travail en hauteur, chimique, hygiène alimentaire…"},
+        {key:'c',label:'Temps de gestion administrative par habilitation et par an',unit:'h',min:0.5,max:8,step:0.5,hint:"Suivi des échéances, relances, archivage, coordination avec la formation."},
+      ]}
   ];
 }
 
@@ -204,7 +226,7 @@ function StepQualif({sector,setSector,teamSize,setTeamSize,selected,setSelected,
   const modules=getModules();
   const canNext=sector&&selected.length>0;
   return h('div',{style:{maxWidth:880,margin:'0 auto',animation:'stepIn .35s ease both'}},
-    h('h1',{style:{fontSize:32,lineHeight:1.15,fontWeight:800,letterSpacing:'-0.03em',color:'#111',margin:'0 0 8px'}},"Combien vous coûte le terrain non digitalisé ?"),
+    h('h1',{style:{fontSize:32,lineHeight:1.15,fontWeight:800,letterSpacing:'-0.03em',color:'#111',margin:'0 0 8px'}},"Combien vous coûtent vos opérations non digitalisées sur le terrain ?"),
     h('p',{style:{fontSize:16,lineHeight:1.5,color:'#687083',margin:'0 0 32px',maxWidth:620}},"Cinq questions, une estimation chiffrée. On part de vos chiffres et d'un coût horaire moyen — tout reste ajustable."),
     h('div',{style:{background:'#fff',border:'1px solid #ECEEF5',borderRadius:12,padding:28,boxShadow:'0 1px 2px rgba(24,24,25,.05)',marginBottom:20}},
       h('div',{className:'roi-grid2',style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:28}},
@@ -218,11 +240,11 @@ function StepQualif({sector,setSector,teamSize,setTeamSize,selected,setSelected,
         ),
         h('div',null,
           h('div',{style:{display:'flex',alignItems:'baseline',justifyContent:'space-between',marginBottom:8}},
-            h('label',{style:{fontSize:13,fontWeight:600,color:'#111'}},"Taille de l'équipe terrain"),
+            h('label',{style:{fontSize:13,fontWeight:600,color:'#111'}},"Effectif du périmètre concerné"),
             h('span',{style:{fontSize:14,fontWeight:700,color:'#3D52D5',fontVariantNumeric:'tabular-nums'}},teamSize>=500?'500 + personnes':teamSize+' personnes')
           ),
           h('input',{type:'range',min:1,max:500,step:1,value:teamSize,onChange:e=>setTeamSize(parseInt(e.target.value,10)),style:trackStyle(teamSize,1,500)}),
-          h('p',{style:{fontSize:12,color:'#A4A9B5',margin:'8px 0 0'}},"Opérateurs, intérimaires et sous-traitants présents sur site.")
+          h('p',{style:{fontSize:12,color:'#A4A9B5',margin:'8px 0 0'}},"Opérateurs de production, techniciens de maintenance, intérimaires, etc.")
         )
       )
     ),
@@ -472,9 +494,9 @@ function EmailModal({totalE,totalH,sector,teamSize,selected,bd,hourlyCost,firstN
 function StepConfirm({totalE,email,onOpenReport,calendlyUrl}){
   return h('div',{style:{maxWidth:560,margin:'24px auto 0',animation:'stepIn .4s ease both',textAlign:'center'}},
     h('div',{style:{width:72,height:72,borderRadius:'50%',background:'#B3FCE1',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 24px',color:'#009A4D',padding:20}},h(Svg,{path:ICONS.check,size:32})),
-    h('h1',{style:{fontSize:30,lineHeight:1.2,fontWeight:800,letterSpacing:'-0.03em',color:'#111',margin:'0 0 10px'}},"Votre audit est en route ✓"),
-    h('p',{style:{fontSize:16,lineHeight:1.55,color:'#687083',margin:'0 0 6px'}},"Nous l'envoyons à ",h('strong',{style:{color:'#111',fontWeight:700}},email),"."),
-    h('p',{style:{fontSize:14,color:'#A4A9B5',margin:'0 0 28px'}},"Pensez à vérifier vos spams — il arrive d'ordinaire en moins d'une minute."),
+    h('h1',{style:{fontSize:30,lineHeight:1.2,fontWeight:800,letterSpacing:'-0.03em',color:'#111',margin:'0 0 10px'}},"Votre audit est prêt ✓"),
+    h('p',{style:{fontSize:16,lineHeight:1.55,color:'#687083',margin:'0 0 6px'}},"Téléchargez-le ci-dessous — un exemplaire est également envoyé à ",h('strong',{style:{color:'#111',fontWeight:700}},email),"."),
+    h('p',{style:{fontSize:14,color:'#A4A9B5',margin:'0 0 28px'}},"Le rapport est téléchargeable immédiatement — vérifiez vos spams si vous ne recevez pas l'email."),
     h('div',{style:{background:'#fff',border:'1px solid #ECEEF5',borderRadius:12,padding:22,boxShadow:'0 1px 2px rgba(24,24,25,.05)',marginBottom:28}},
       h('div',{style:{fontSize:12,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:'#A4A9B5',marginBottom:8}},"Votre estimation"),
       h('div',{className:'roi-bignum',style:{fontSize:36,fontWeight:800,letterSpacing:'-0.03em',color:'#3D52D5'}},fmtEur(totalE),h('span',{style:{fontSize:18,color:'#A4A9B5',fontWeight:700}}," / an"))
@@ -604,6 +626,16 @@ function ReportView({bd,totalE,totalH,hourlyCost,sector,teamSize,email,onClose,c
       formula:'Audits / an × (temps de réponse économisé + retraitement manuel évité) × coût horaire',
       steps:[{k:'Audits / inspections / an',val:grp(v.a)},{k:'Temps de réponse / audit',val:displayValue({...m.inputs[1],value:v.b})+' → 20 min'},{k:'Retraitement manuel évité',val:displayValue({...m.inputs[2],value:v.c})}],
       note:"La rédaction passe d'environ "+num(v.b)+" h à 20 min par audit, et la ressaisie est supprimée.",
+    }),
+    bonnes_pratiques:(v,m)=>({
+      formula:'Opérateurs × temps partage/sem × 47 semaines × part capitalisée × coût horaire',
+      steps:[{k:'Opérateurs concernés',val:grp(v.a)},{k:'Temps partagé / sem',val:displayValue({...m.inputs[1],value:v.b})},{k:'Part capitalisée avec Komin',val:v.c+' %'}],
+      note:'Chaque bonne pratique créée dans Komin est réutilisable à l’infini et cherchable depuis le terrain.',
+    }),
+    habilitations:(v,m)=>({
+      formula:'Salariés × habilitations/personne × temps de gestion/an × coût horaire',
+      steps:[{k:'Salariés avec habilitations',val:grp(v.a)},{k:'Habilitations / personne',val:v.b},{k:'Gestion admin / habilitation / an',val:v.c+' h'}],
+      note:'Le suivi automatisé des échéances et des relances élimine la quasi-totalité du temps de gestion manuelle.',
     }),
   };
 
@@ -736,7 +768,7 @@ function ReportView({bd,totalE,totalH,hourlyCost,sector,teamSize,email,onClose,c
 
 /* ── Root App ── */
 function App(){
-  const CALENDLY='https://calendly.com/komin/demo';
+  const CALENDLY='https://meetings-eu1.hubspot.com/cyrille-pailleret';
   const [step,setStep]=useState('qualif');
   const [view,setView]=useState('app');
   const [sector,setSector]=useState('');
@@ -787,9 +819,9 @@ function App(){
           h('span',{style:{fontSize:12,color:'#A4A9B5'}},"© "+(new Date().getFullYear())+" Komin SAS — Tous droits réservés")
         ),
         h('div',{style:{display:'flex',gap:20,flexWrap:'wrap'}},
-          h('a',{href:'https://komin.io/mentions-legales',target:'_blank',rel:'noopener',style:{fontSize:12,color:'#A4A9B5',textDecoration:'none'}},"Mentions légales"),
-          h('a',{href:'https://komin.io/politique-de-confidentialite',target:'_blank',rel:'noopener',style:{fontSize:12,color:'#A4A9B5',textDecoration:'none'}},"Politique de confidentialité"),
-          h('a',{href:'https://komin.io/cgv',target:'_blank',rel:'noopener',style:{fontSize:12,color:'#A4A9B5',textDecoration:'none'}},"CGV"),
+          h('a',{href:'https://www.komin.io/legal/legal',target:'_blank',rel:'noopener',style:{fontSize:12,color:'#A4A9B5',textDecoration:'none'}},"Mentions légales"),
+          h('a',{href:'https://www.komin.io/legal/privacy-policy',target:'_blank',rel:'noopener',style:{fontSize:12,color:'#A4A9B5',textDecoration:'none'}},"Politique de confidentialité"),
+          h('a',{href:'https://www.komin.io/legal/terms-of-use',target:'_blank',rel:'noopener',style:{fontSize:12,color:'#A4A9B5',textDecoration:'none'}},"CGV"),
           h('span',{style:{fontSize:12,color:'#A4A9B5'}},"contact@komin.io")
         )
       )
