@@ -403,10 +403,40 @@ function StepResult({bd,totalE,totalH,hourlyCost,setHourlyCost,submitted,onOpenE
 }
 
 /* ── Email Modal ── */
-function EmailModal({totalE,firstName,setFirstName,email,setEmail,onClose,onSubmit}){
+function EmailModal({totalE,totalH,sector,teamSize,selected,bd,hourlyCost,firstName,setFirstName,email,setEmail,onClose,onSubmit}){
   const [touched,setTouched]=useState(false);
+  const [submitting,setSubmitting]=useState(false);
   const emailOk=/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)&&firstName.trim().length>0;
   const emailFormatOk=/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
+
+  async function handleSubmit(){
+    if(!emailOk||submitting) return;
+    setSubmitting(true);
+    try {
+      const etp=totalH/1600;
+      await fetch('https://api.hsforms.com/submissions/v3/integration/submit/27225194/2b156bc1-134e-44f3-a279-7bb4ca8982db',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          fields:[
+            {name:'firstname',       value:firstName},
+            {name:'email',           value:email},
+            {name:'roi_total',       value:fmtEur(totalE)},
+            {name:'roi_heures',      value:fmtH(totalH)},
+            {name:'roi_etp',         value:num(Number(etp.toFixed(1)))+' ETP'},
+            {name:'roi_secteur',     value:sector||'—'},
+            {name:'roi_equipe',      value:(teamSize>=500?'500 +':teamSize)+' personnes'},
+            {name:'roi_modules',     value:selected.join(', ')},
+            {name:'roi_cout_horaire',value:hourlyCost+' €/h'},
+            {name:'roi_detail',      value:bd.map(b=>b.m.title+' : '+fmtEur(b.euros)).join(' | ')},
+          ],
+          context:{pageUri:window.location.href,pageName:'Calculateur ROI Komin'},
+        }),
+      });
+    } catch(e){ console.error('HubSpot submission error',e); }
+    setSubmitting(false);
+    onSubmit();
+  }
   return h('div',{onClick:onClose,style:{position:'fixed',inset:0,zIndex:50,display:'flex',alignItems:'center',justifyContent:'center',padding:20,background:'rgba(17,17,17,.45)',backdropFilter:'blur(3px)',animation:'backdropIn .2s ease both'}},
     h('div',{onClick:e=>e.stopPropagation(),style:{width:'100%',maxWidth:440,background:'#fff',borderRadius:16,padding:32,boxShadow:'0 32px 48px -12px rgba(24,24,25,.22)',animation:'modalIn .28s cubic-bezier(.2,.7,.3,1) both',position:'relative'}},
       h('button',{onClick:onClose,style:{position:'absolute',top:18,right:18,width:32,height:32,border:'none',borderRadius:8,background:'#F9FAFB',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:'#687083',padding:8}},h(Svg,{path:ICONS.x,size:16})),
@@ -430,9 +460,9 @@ function EmailModal({totalE,firstName,setFirstName,email,setEmail,onClose,onSubm
           touched&&email.length>3&&!emailFormatOk&&h('p',{style:{fontSize:12,color:'#E22020',margin:'6px 0 0'}},"Indiquez une adresse email professionnelle valide.")
         )
       ),
-      h('button',{onClick:emailOk?onSubmit:undefined,disabled:!emailOk,
+      h('button',{onClick:emailOk?handleSubmit:undefined,disabled:!emailOk,
         style:{width:'100%',marginTop:20,height:48,border:'none',borderRadius:8,background:emailOk?'#3D52D5':'#CDD2DE',fontFamily:'inherit',fontSize:16,fontWeight:600,color:'#fff',cursor:emailOk?'pointer':'not-allowed',boxShadow:'0 1px 2px rgba(24,24,25,.08)',transition:'background .15s'}},
-        "Recevoir mon audit"),
+        submitting?'Envoi en cours…':'Recevoir mon audit'),
       h('p',{style:{fontSize:11.5,lineHeight:1.5,color:'#A4A9B5',margin:'14px 0 0',textAlign:'center'}},"En continuant, vous acceptez d'être recontacté par Komin. Aucune revente de données. Désinscription en un clic. (RGPD)")
     )
   );
@@ -765,7 +795,7 @@ function App(){
       )
     ),
     /* Email modal */
-    step==='email'&&h(EmailModal,{totalE,firstName,setFirstName,email,setEmail,
+    step==='email'&&h(EmailModal,{totalE,totalH,sector,teamSize,selected,bd,hourlyCost,firstName,setFirstName,email,setEmail,
       onClose:()=>setStep('result'),
       onSubmit:()=>setSubmitted(true)&&setStep('confirm')||setStep('confirm')})
   );
