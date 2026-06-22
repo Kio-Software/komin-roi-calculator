@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calculateur de ROI — Komin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:"Manrope";src:url("fonts/Manrope-VariableFont_wght.ttf") format("truetype-variations"),url("fonts/Manrope-VariableFont_wght.ttf") format("truetype");font-weight:200 900;font-style:normal;font-display:swap;}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:#F7F9FC;font-family:"Manrope",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#4b4d51;-webkit-font-smoothing:antialiased;}
+@keyframes stepIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+@keyframes backdropIn{from{opacity:0;}to{opacity:1;}}
+@keyframes modalIn{from{opacity:0;transform:translateY(14px) scale(.985);}to{opacity:1;transform:none;}}
+input[type=range]{-webkit-appearance:none;appearance:none;height:6px;border-radius:999px;background:#ECEEF5;outline:none;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:#3D52D5;cursor:pointer;border:3px solid #fff;box-shadow:0 1px 3px rgba(24,24,25,.28);transition:transform .12s;}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.1);}
+input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#3D52D5;cursor:pointer;border:3px solid #fff;box-shadow:0 1px 3px rgba(24,24,25,.28);}
+.roi-bignum{font-variant-numeric:tabular-nums;}
+@media (max-width:680px){.roi-steplabel{display:none;}.roi-pad{padding-left:16px !important;padding-right:16px !important;}.roi-grid2{grid-template-columns:1fr !important;}.roi-hero{font-size:46px !important;}.roi-topactions{display:none !important;}}
+@media print{
+  .roi-noprint{display:none !important;}
+  footer{display:none !important;}
+  body{background:#fff;}
+  .roi-report{box-shadow:none !important;margin:0 !important;border:none !important;border-radius:0 !important;padding:20px 32px !important;}
+  .roi-report + .roi-report{page-break-before:always;break-before:page;margin-top:0 !important;}
+  /* Shrink chart in print */
+  .roi-chart-wrap svg{max-height:120px !important;}
+  .roi-chart-wrap p{font-size:10px !important;margin:4px 0 12px !important;}
+  /* Tighten section spacing */
+  .roi-report > div > div{padding-top:14px !important;padding-bottom:14px !important;}
+  /* Smaller headings */
+  .roi-report h1{font-size:20px !important;}
+}
+#root{min-height:100vh;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script>
+(function(){
+'use strict';
+const {useState,useCallback,createElement:h,Fragment} = React;
+
+/* ── SVG helpers ── */
+function Svg({path,size=24}){
+  return h('svg',{viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.7,strokeLinecap:'round',strokeLinejoin:'round',width:size,height:size,dangerouslySetInnerHTML:{__html:path}});
+}
+
+function KominLogo({height=24}){
+  const P=['M 0 52.38 L 0 0.54 L 6.408 0.54 L 6.408 24.876 L 29.088 0.54 L 37.152 0.54 L 13.608 25.704 L 38.988 52.38 L 30.708 52.38 L 6.408 27.036 L 6.408 52.38 L 0 52.38 Z','M 61.293 53.46 C 57.429 53.46 54.093 52.584 51.285 50.832 C 48.501 49.08 46.353 46.656 44.841 43.56 C 43.329 40.464 42.573 36.912 42.573 32.904 C 42.573 28.824 43.341 25.248 44.877 22.176 C 46.413 19.104 48.585 16.716 51.393 15.012 C 54.201 13.284 57.501 12.42 61.293 12.42 C 65.181 12.42 68.529 13.296 71.337 15.048 C 74.145 16.776 76.293 19.188 77.781 22.284 C 79.293 25.356 80.049 28.896 80.049 32.904 C 80.049 36.96 79.293 40.536 77.781 43.632 C 76.269 46.704 74.109 49.116 71.301 50.868 C 68.493 52.596 65.157 53.46 61.293 53.46 Z M 61.293 47.376 C 65.325 47.376 68.325 46.032 70.293 43.344 C 72.261 40.656 73.245 37.176 73.245 32.904 C 73.245 28.512 72.249 25.02 70.257 22.428 C 68.265 19.812 65.277 18.504 61.293 18.504 C 58.581 18.504 56.349 19.116 54.597 20.34 C 52.845 21.564 51.537 23.256 50.673 25.416 C 49.809 27.576 49.377 30.072 49.377 32.904 C 49.377 37.272 50.385 40.776 52.401 43.416 C 54.417 46.056 57.381 47.376 61.293 47.376 Z','M 138.051 52.38 L 138.087 27.504 C 138.087 24.6 137.307 22.332 135.747 20.7 C 134.211 19.044 132.207 18.216 129.735 18.216 C 128.295 18.216 126.927 18.552 125.631 19.224 C 124.335 19.872 123.279 20.904 122.463 22.32 C 121.647 23.712 121.239 25.5 121.239 27.684 L 117.855 26.316 C 117.807 23.556 118.371 21.144 119.547 19.08 C 120.747 16.992 122.379 15.372 124.443 14.22 C 126.507 13.068 128.835 12.492 131.427 12.492 C 135.483 12.492 138.675 13.728 141.003 16.2 C 143.331 18.648 144.495 21.948 144.495 26.1 L 144.459 52.38 L 138.051 52.38 Z M 91.539 52.38 L 91.539 13.5 L 97.263 13.5 L 97.263 23.904 L 97.983 23.904 L 97.983 52.38 L 91.539 52.38 Z M 114.831 52.38 L 114.867 27.756 C 114.867 24.78 114.099 22.452 112.563 20.772 C 111.027 19.068 108.987 18.216 106.443 18.216 C 103.923 18.216 101.883 19.08 100.323 20.808 C 98.763 22.536 97.983 24.828 97.983 27.684 L 94.599 25.668 C 94.599 23.148 95.199 20.892 96.399 18.9 C 97.599 16.908 99.231 15.348 101.295 14.22 C 103.359 13.068 105.699 12.492 108.315 12.492 C 110.931 12.492 113.211 13.044 115.155 14.148 C 117.099 15.252 118.599 16.836 119.655 18.9 C 120.711 20.94 121.239 23.376 121.239 26.208 L 121.203 52.38 L 114.831 52.38 Z','M 158.192 6.624 L 158.192 0 L 164.6 0 L 164.6 6.624 L 158.192 6.624 Z M 158.192 52.38 L 158.192 13.5 L 164.6 13.5 L 164.6 52.38 L 158.192 52.38 Z','M 206.686 52.38 L 206.686 32.904 C 206.686 31.056 206.518 29.28 206.182 27.576 C 205.87 25.872 205.306 24.348 204.49 23.004 C 203.698 21.636 202.618 20.556 201.25 19.764 C 199.906 18.972 198.202 18.576 196.138 18.576 C 194.53 18.576 193.066 18.852 191.746 19.404 C 190.45 19.932 189.334 20.748 188.398 21.852 C 187.462 22.956 186.73 24.348 186.202 26.028 C 185.698 27.684 185.446 29.64 185.446 31.896 L 181.234 30.6 C 181.234 26.832 181.906 23.604 183.25 20.916 C 184.618 18.204 186.526 16.128 188.974 14.688 C 191.446 13.224 194.35 12.492 197.686 12.492 C 200.206 12.492 202.354 12.888 204.13 13.68 C 205.906 14.472 207.382 15.528 208.558 16.848 C 209.734 18.144 210.658 19.608 211.33 21.24 C 212.002 22.848 212.47 24.492 212.734 26.172 C 213.022 27.828 213.166 29.4 213.166 30.888 L 213.166 52.38 L 206.686 52.38 Z M 178.966 52.38 L 178.966 13.5 L 184.726 13.5 L 184.726 23.904 L 185.446 23.904 L 185.446 52.38 L 178.966 52.38 Z','M 227.277 52.38 L 227.277 45.324 L 234.333 45.324 L 234.333 52.38 L 227.277 52.38 Z','M 249.851 6.624 L 249.851 0 L 256.259 0 L 256.259 6.624 L 249.851 6.624 Z M 249.851 52.38 L 249.851 13.5 L 256.259 13.5 L 256.259 52.38 L 249.851 52.38 Z','M 287.221 53.46 C 283.357 53.46 280.021 52.584 277.213 50.832 C 274.429 49.08 272.281 46.656 270.769 43.56 C 269.257 40.464 268.501 36.912 268.501 32.904 C 268.501 28.824 269.269 25.248 270.805 22.176 C 272.341 19.104 274.513 16.716 277.321 15.012 C 280.129 13.284 283.429 12.42 287.221 12.42 C 291.109 12.42 294.457 13.296 297.265 15.048 C 300.073 16.776 302.221 19.188 303.709 22.284 C 305.221 25.356 305.977 28.896 305.977 32.904 C 305.977 36.96 305.221 40.536 303.709 43.632 C 302.197 46.704 300.037 49.116 297.229 50.868 C 294.421 52.596 291.085 53.46 287.221 53.46 Z M 287.221 47.376 C 291.253 47.376 294.253 46.032 296.221 43.344 C 298.189 40.656 299.173 37.176 299.173 32.904 C 299.173 28.512 298.177 25.02 296.185 22.428 C 294.193 19.812 291.205 18.504 287.221 18.504 C 284.509 18.504 282.277 19.116 280.525 20.34 C 278.773 21.564 277.465 23.256 276.601 25.416 C 275.737 27.576 275.305 30.072 275.305 32.904 C 275.305 37.272 276.313 40.776 278.329 43.416 C 280.345 46.056 283.309 47.376 287.221 47.376 Z'];
+  return h('svg',{viewBox:'0 0 305.977 53.46',fill:'currentColor',style:{height:height+'px',width:'auto',display:'block'}},
+    P.map((d,i)=>h('path',{key:i,d})));
+}
+
+/* ── Icon paths ── */
+const ICONS = {
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  arrow: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+  lock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  bulb: '<path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/>',
+  info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  mail: '<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  calendar: '<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
+  download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/>',
+  docs: '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/>',
+  shield: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
+  folder: '<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
+  warning: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  clipboard: '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/>',
+};
+
+/* ── Module definitions ── */
+function getModules(){
+  return [
+    { id:'instructions', title:'Instructions de travail',
+      desc:'Procédures et modes opératoires à jour, accessibles au poste.',
+      fact:"Un opérateur passe en moyenne 45 min/semaine à chercher la bonne procédure. Sur 50 opérateurs, c'est 1 950 h perdues par an.",
+      iconKey:'docs',
+      def:(ts)=>({a:ts,b:45,c:70}),
+      calc:(v,h)=>{const hours=v.a*(v.b/60)*47*(v.c/100);return{hours,euros:hours*h};},
+      inputs:[
+        {key:'a',label:'Opérateurs concernés',unit:'opérateurs',min:1,max:500,step:1,hint:"Toutes les personnes qui suivent des procédures sur le terrain."},
+        {key:'b',label:"Temps perdu à chercher la bonne procédure",unit:'min/sem',min:0,max:180,step:5,hint:"Chercher la bonne version, valider, faire des allers-retours bureau / atelier."},
+        {key:'c',label:'Part des instructions digitalisées avec Komin (sur 12 mois)',unit:'%',min:0,max:100,step:5,hint:"Repère : avec Komin, un utilisateur à temps plein crée 10 instructions par semaine."},
+      ]},
+    { id:'accueil', title:'Accueil sécurité',
+      desc:"Parcours d'accueil sécurité digital pour chaque nouvel entrant.",
+      fact:"60 % des accidents terrain surviennent dans les 6 premiers mois à un nouveau poste. Un accueil digitalisé réduit ce risque d'environ 40 %.",
+      iconKey:'shield',
+      def:(ts)=>({a:Math.max(1,Math.round(ts*0.25)),b:2,c:50}),
+      calc:(v,h)=>{const hours=v.a*v.b*(v.c/100)*2;return{hours,euros:hours*h};},
+      inputs:[
+        {key:'a',label:'Nouveaux entrants par an',unit:'entrants/an',min:0,max:500,step:1,hint:"Embauches, intérimaires et sous-traitants qui passent l'accueil sécurité."},
+        {key:'b',label:"Durée d'un accueil sécurité",unit:'h',min:0.5,max:4,step:0.5,hint:"Un accueil sécurité papier dure en moyenne 2 h par entrant."},
+        {key:'c',label:'Part des accueils réalisables à distance',unit:'%',min:0,max:100,step:5,hint:"Séparez la partie théorique (faisable à distance) de la partie pratique sur site."},
+      ]},
+    { id:'ged', title:'GED — Gestion documentaire',
+      desc:'Tous vos documents centralisés, versionnés et cherchables.',
+      fact:"Les employés passent 1,8 h par jour à chercher de l'information (McKinsey, 2012). Sur un site de 30 personnes, c'est l'équivalent de 5 ETP perdus par an.",
+      iconKey:'folder',
+      def:(ts)=>({a:ts,b:60,c:6,d:'Non, pas encore'}),
+      calc:(v,h)=>{const coef=(v.d&&v.d.indexOf('Oui')===0)?0.20:0.40;const fm=Math.max(0.8,Math.min(1.2,1+(6-v.c)*0.02));const hours=v.a*(v.b/60)*220*coef*fm;return{hours,euros:hours*h};},
+      inputs:[
+        {key:'a',label:'Personnes concernées',unit:'personnes',min:1,max:500,step:1,hint:"Tous ceux qui consultent des documents : plans, fiches, comptes-rendus."},
+        {key:'b',label:"Temps de recherche d'info par jour",unit:'min/jour',min:0,max:180,step:5,hint:"McKinsey mesure 1,8 h/jour. On part volontairement plus bas."},
+        {key:'c',label:'Fréquence de mise à jour / revue de la documentation',unit:'mois',min:1,max:36,step:1,hint:"Tous les combien de mois la documentation est revue ou mise à jour."},
+        {key:'d',type:'select',label:'Une GED est-elle déjà en place ?',options:['Non, pas encore','Oui, déjà en place'],hint:"Hypothèse clé : 40 % si aucune GED, 20 % si une GED est déjà en place."},
+      ]},
+    { id:'remontee', title:'Remontée terrain',
+      desc:'Signalement mobile des anomalies et presque-accidents.',
+      fact:"70 % des non-conformités détectées tardivement auraient pu être signalées 2 à 4 semaines plus tôt avec un outil de remontée mobile.",
+      iconKey:'warning',
+      def:()=>({a:8,b:800,c:40}),
+      calc:(v)=>{const euros=v.a*12*v.b*(v.c/100);return{hours:0,euros};},
+      inputs:[
+        {key:'a',label:'Non-conformités / incidents par mois',unit:'incidents/mois',min:0,max:100,step:1,hint:"Anomalies, presque-accidents et dérives qualité signalés."},
+        {key:'b',label:"Coût moyen d'une détection tardive",unit:'€',min:0,max:5000,step:100,hint:"Reprise, rebut, arrêt, sanction… quand c'est vu trop tard."},
+        {key:'c',label:'Part évitable avec une remontée en temps réel',unit:'%',min:0,max:90,step:5,hint:"Signalé en temps réel depuis le terrain plutôt que 2 à 4 semaines plus tard."},
+      ]},
+    { id:'audit', title:'Audit terrain',
+      desc:'Audits, inspections et rondes réalisés et restitués sur place.',
+      fact:"Un auditeur terrain passe en moyenne 3 h à rédiger son rapport après chaque audit. Avec un outil digital : moins de 20 minutes.",
+      iconKey:'clipboard',
+      def:(ts)=>({a:Math.max(2,Math.round(ts*1.2)),b:3,c:60}),
+      calc:(v,h)=>{const redacSaved=Math.max(0,v.b-0.33);const hours=v.a*(redacSaved+v.c/60);return{hours,euros:hours*h};},
+      inputs:[
+        {key:'a',label:'Audits / inspections par an',unit:'audits/an',min:0,max:1000,step:5,hint:"Tournées sécurité, audits 5S, contrôles qualité, rondes."},
+        {key:'b',label:'Temps passé à répondre aux audits',unit:'h',min:0,max:6,step:0.5,hint:"Préparer les preuves, rassembler les documents, rédiger les réponses."},
+        {key:'c',label:'Temps de retraitement manuel par audit',unit:'min',min:0,max:240,step:5,hint:"Ressaisie, mise en forme et consolidation des constats (Excel, rapports)."},
+      ]},
+  ];
+}
+
+/* ── Formatters ── */
+function grp(n){ return new Intl.NumberFormat('fr-FR').format(n); }
+function fmtEur(n){ return grp(Math.round(n/100)*100)+' €'; }
+function fmtH(n){ return grp(Math.round(n/10)*10)+' h'; }
+function num(v){ return String(v).replace('.',','); }
+
+function displayValue(inp){
+  if(inp.type==='select') return inp.value;
+  const v=inp.value;
+  if(inp.unit==='%') return v+' %';
+  if(inp.unit==='€') return grp(v)+' €';
+  if(inp.unit==='h') return num(v)+' h';
+  if(inp.unit==='min/sem') return v+' min/sem';
+  if(inp.unit==='min/jour') return v+' min/jour';
+  if(inp.unit==='min') return v+' min';
+  if(inp.unit==='mois') return v>=12&&v%12===0?('tous les '+(v/12)+' an'+(v/12>1?'s':'')):('tous les '+v+' mois');
+  return grp(v)+' '+inp.unit;
+}
+
+function trackStyle(value,min,max){
+  const pct=Math.max(0,Math.min(100,((value-min)/(max-min))*100));
+  return {width:'100%',height:'6px',WebkitAppearance:'none',appearance:'none',borderRadius:'999px',outline:'none',cursor:'pointer',
+    background:`linear-gradient(90deg,#3D52D5 ${pct}%,#ECEEF5 ${pct}%)`};
+}
+
+function compute(selected,inputs,teamSize,hourlyCost){
+  const modules=getModules();
+  let totalE=0,totalH=0;const bd=[];
+  for(const m of modules){
+    if(!selected.includes(m.id)) continue;
+    const v=inputs[m.id]||m.def(teamSize);
+    const r=m.calc(v,hourlyCost);
+    totalE+=r.euros;totalH+=r.hours;
+    bd.push({m,v,euros:r.euros,hours:r.hours});
+  }
+  bd.sort((a,b)=>b.euros-a.euros);
+  return{bd,totalE,totalH};
+}
+
+/* ── Progress Bar ── */
+function ProgressBar({step}){
+  const order=['qualif','questions','result','email','confirm'];
+  const labels=['Qualification','Vos usages','Résultat','Coordonnées','Confirmation'];
+  const curIdx=step==='email'?3:order.indexOf(step);
+  return h('div',{className:'roi-pad',style:{background:'#fff',borderBottom:'1px solid #ECEEF5',padding:'16px 40px'}},
+    h('div',{style:{maxWidth:880,margin:'0 auto',display:'flex',alignItems:'center',gap:6}},
+      labels.map((label,i)=>{
+        const done=i<curIdx,current=i===curIdx;
+        return h(Fragment,{key:i},
+          i>0&&h('div',{style:{flex:1,height:2,borderRadius:2,background:i<=curIdx?'#3D52D5':'#ECEEF5',margin:'0 2px',alignSelf:'flex-start',marginTop:15}}),
+          h('div',{style:{display:'flex',alignItems:'center',gap:9,cursor:'default',flex:'none'}},
+            h('div',{style:{width:32,height:32,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:700,
+              background:current?'#3D52D5':(done?'#EFF1FC':'#fff'),
+              color:current?'#fff':(done?'#3D52D5':'#A4A9B5'),
+              border:`2px solid ${current?'#3D52D5':(done?'#EFF1FC':'#E0E2E6')}`,flex:'none',transition:'all .2s'}},
+              done?h(Svg,{path:ICONS.check,size:15}):h('span',null,i+1)),
+            h('span',{className:'roi-steplabel',style:{fontSize:13,fontWeight:600,color:(current||done)?'#111':'#A4A9B5',whiteSpace:'nowrap'}},label))
+        );
+      })
+    )
+  );
+}
+
+/* ── Step 1: Qualification ── */
+function StepQualif({sector,setSector,teamSize,setTeamSize,selected,setSelected,onNext}){
+  const modules=getModules();
+  const canNext=sector&&selected.length>0;
+  return h('div',{style:{maxWidth:880,margin:'0 auto',animation:'stepIn .35s ease both'}},
+    h('h1',{style:{fontSize:32,lineHeight:1.15,fontWeight:800,letterSpacing:'-0.03em',color:'#111',margin:'0 0 8px'}},"Combien vous coûte le terrain non digitalisé ?"),
+    h('p',{style:{fontSize:16,lineHeight:1.5,color:'#687083',margin:'0 0 32px',maxWidth:620}},"Cinq questions, une estimation chiffrée. On part de vos chiffres et d'un coût horaire moyen — tout reste ajustable."),
+    h('div',{style:{background:'#fff',border:'1px solid #ECEEF5',borderRadius:12,padding:28,boxShadow:'0 1px 2px rgba(24,24,25,.05)',marginBottom:20}},
+      h('div',{className:'roi-grid2',style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:28}},
+        h('div',null,
+          h('label',{style:{display:'block',fontSize:13,fontWeight:600,color:'#111',marginBottom:8}},"Votre secteur"),
+          h('select',{value:sector,onChange:e=>setSector(e.target.value),style:{display:'block',width:'100%',padding:'11px 12px',fontFamily:'inherit',fontSize:14,color:'#111',background:'#fff',border:'1px solid #E0E2E6',borderRadius:8,cursor:'pointer'}},
+            h('option',{value:''},"Choisir un secteur…"),
+            ['Industrie / production','BTP / construction','Logistique & supply chain','Agroalimentaire','Énergie & utilities','Maintenance & services','Propreté / facility management','Autre'].map(s=>h('option',{key:s,value:s},s))
+          ),
+          h('p',{style:{fontSize:12,color:'#A4A9B5',margin:'8px 0 0'}},"Sert à calibrer les ordres de grandeur du rapport.")
+        ),
+        h('div',null,
+          h('div',{style:{display:'flex',alignItems:'baseline',justifyContent:'space-between',marginBottom:8}},
+            h('label',{style:{fontSize:13,fontWeight:600,color:'#111'}},"Taille de l'équipe terrain"),
+            h('span',{style:{fontSize:14,fontWeight:700,color:'#3D52D5',fontVariantNumeric:'tabular-nums'}},teamSize>=500?'500 + personnes':teamSize+' personnes')
+          ),
+          h('input',{type:'range',min:1,max:500,step:1,value:teamSize,onChange:e=>setTeamSize(parseInt(e.target.value,10)),style:trackStyle(teamSize,1,500)}),
+          h('p',{style:{fontSize:12,color:'#A4A9B5',margin:'8px 0 0'}},"Opérateurs, intérimaires et sous-traitants présents sur site.")
+        )
+      )
+    ),
+    h('div',{style:{display:'flex',alignItems:'baseline',justifyContent:'space-between',margin:'0 0 14px'}},
+      h('h2',{style:{fontSize:18,fontWeight:700,color:'#111',letterSpacing:'-0.01em',margin:0}},"Quels processus voulez-vous chiffrer ?"),
+      h('span',{style:{fontSize:12,color:'#A4A9B5'}},"Sélection multiple")
+    ),
+    h('div',{className:'roi-grid2',style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}},
+      modules.map(m=>{
+        const sel=selected.includes(m.id);
+        return h('div',{key:m.id,onClick:()=>setSelected(sel?selected.filter(x=>x!==m.id):selected.concat([m.id])),
+          style:{display:'flex',gap:14,padding:18,borderRadius:12,cursor:'pointer',
+            background:sel?'#F7F8FF':'#fff',border:`1.5px solid ${sel?'#3D52D5':'#ECEEF5'}`,
+            boxShadow:'0 1px 2px rgba(24,24,25,.05)',transition:'all .15s'}},
+          h('div',{style:{width:40,height:40,borderRadius:10,flex:'none',display:'flex',alignItems:'center',justifyContent:'center',
+            background:sel?'#3D52D5':'#EFF1FC',color:sel?'#fff':'#3D52D5',padding:9}},h(Svg,{path:ICONS[m.iconKey],size:22})),
+          h('div',{style:{flex:1,minWidth:0}},
+            h('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}},
+              h('span',{style:{fontSize:15,fontWeight:700,color:'#111',letterSpacing:'-0.01em'}},m.title),
+              h('span',{style:{width:20,height:20,borderRadius:6,flex:'none',display:'flex',alignItems:'center',justifyContent:'center',
+                background:sel?'#3D52D5':'#fff',border:`1.5px solid ${sel?'#3D52D5':'#CDD2DE'}`,color:'#fff',padding:3}},
+                sel&&h(Svg,{path:ICONS.check,size:14}))
+            ),
+            h('p',{style:{fontSize:13,lineHeight:1.45,color:'#687083',margin:'4px 0 0'}},m.desc)
+          )
+        );
+      })
+    ),
+    h('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:32,gap:16}},
+      h('span',{style:{fontSize:13,color:'#A4A9B5'}},canNext?'Tout est prêt.':"Choisissez un secteur et au moins un processus."),
+      h('button',{onClick:canNext?onNext:undefined,disabled:!canNext,
+        style:{display:'inline-flex',alignItems:'center',gap:8,height:44,padding:'0 24px',border:'none',borderRadius:8,fontFamily:'inherit',fontSize:15,fontWeight:600,color:'#fff',
+          background:canNext?'#3D52D5':'#CDD2DE',cursor:canNext?'pointer':'not-allowed',boxShadow:'0 1px 2px rgba(24,24,25,.08)',transition:'background .15s'}},
+        h('span',null,'Continuer'),h(Svg,{path:ICONS.arrow,size:16}))
+    )
+  );
+}
+
+/* ── Step 2: Questions ── */
+function StepQuestions({selected,inputs,setInputs,teamSize,onBack,onNext}){
+  const modules=getModules().filter(m=>selected.includes(m.id));
+  function handleSlider(modId,key,val){
+    setInputs(prev=>({...prev,[modId]:{...(prev[modId]||{}),[key]:parseFloat(val)}}));
+  }
+  function handleSelect(modId,key,val){
+    setInputs(prev=>({...prev,[modId]:{...(prev[modId]||{}),[key]:val}}));
+  }
+  return h('div',{style:{maxWidth:880,margin:'0 auto',animation:'stepIn .35s ease both'}},
+    h('h1',{style:{fontSize:28,lineHeight:1.18,fontWeight:800,letterSpacing:'-0.03em',color:'#111',margin:'0 0 8px'}},"Parlez-nous de votre quotidien terrain"),
+    h('p',{style:{fontSize:16,color:'#687083',margin:'0 0 28px'}},"Ajustez chaque curseur à votre réalité. Le résultat se calcule à la fin."),
+    h('div',{style:{display:'flex',flexDirection:'column',gap:18}},
+      modules.map(m=>{
+        const vals=inputs[m.id]||m.def(teamSize);
+        return h('div',{key:m.id,style:{background:'#fff',border:'1px solid #ECEEF5',borderRadius:12,padding:26,boxShadow:'0 1px 2px rgba(24,24,25,.05)'}},
+          h('div',{style:{display:'flex',alignItems:'center',gap:14,marginBottom:22}},
+            h('div',{style:{width:40,height:40,borderRadius:10,flex:'none',display:'flex',alignItems:'center',justifyContent:'center',background:'#EFF1FC',color:'#3D52D5',padding:9}},h(Svg,{path:ICONS[m.iconKey],size:22})),
+            h('div',null,
+              h('div',{style:{fontSize:16,fontWeight:700,color:'#111',letterSpacing:'-0.01em'}},m.title),
+              h('div',{style:{fontSize:13,color:'#687083'}},m.desc)
+            )
+          ),
+          h('div',{style:{display:'flex',flexDirection:'column',gap:22}},
+            m.inputs.map(inp=>{
+              const val=vals[inp.key];
+              const isSlider=inp.type!=='select';
+              const dv=displayValue({...inp,value:val});
+              return h('div',{key:inp.key},
+                h('div',{style:{display:'flex',alignItems:'baseline',justifyContent:'space-between',gap:12,marginBottom:9}},
+                  h('label',{style:{fontSize:14,fontWeight:600,color:'#111'}},inp.label),
+                  isSlider&&h('span',{style:{flex:'none',fontSize:13,fontWeight:700,color:'#3D52D5',background:'#EFF1FC',padding:'3px 10px',borderRadius:999,fontVariantNumeric:'tabular-nums',whiteSpace:'nowrap'}},dv)
+                ),
+                isSlider
+                  ?h('input',{type:'range',min:inp.min,max:inp.max,step:inp.step,value:val,
+                    onChange:e=>handleSlider(m.id,inp.key,e.target.value),style:trackStyle(val,inp.min,inp.max)})
+                  :h('select',{value:val,onChange:e=>handleSelect(m.id,inp.key,e.target.value),
+                    style:{display:'block',width:'100%',padding:'10px 12px',fontFamily:'inherit',fontSize:14,color:'#111',background:'#fff',border:'1px solid #E0E2E6',borderRadius:8,cursor:'pointer'}},
+                    inp.options.map(o=>h('option',{key:o,value:o},o))),
+                h('p',{style:{fontSize:12.5,lineHeight:1.45,color:'#A4A9B5',margin:'9px 0 0'}},inp.hint)
+              );
+            })
+          ),
+          h('div',{style:{marginTop:22,display:'flex',gap:12,padding:'14px 16px',borderRadius:10,background:'#EFF1FC'}},
+            h('span',{style:{display:'flex',width:18,height:18,flex:'none',color:'#3D52D5',marginTop:1}},h(Svg,{path:ICONS.bulb,size:18})),
+            h('div',null,
+              h('div',{style:{fontSize:11,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:'#3D52D5',marginBottom:3}},"Le saviez-vous ?"),
+              h('div',{style:{fontSize:13.5,lineHeight:1.5,color:'#2C41C4'}},m.fact)
+            )
+          )
+        );
+      })
+    ),
+    h('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:28}},
+      h('button',{onClick:onBack,style:{display:'inline-flex',alignItems:'center',gap:8,height:44,padding:'0 18px',border:'1px solid #E0E2E6',borderRadius:8,background:'#fff',fontFamily:'inherit',fontSize:15,fontWeight:600,color:'#111',cursor:'pointer'}},"Retour"),
+      h('button',{onClick:onNext,style:{display:'inline-flex',alignItems:'center',gap:8,height:44,padding:'0 24px',border:'none',borderRadius:8,background:'#3D52D5',fontFamily:'inherit',fontSize:15,fontWeight:600,color:'#fff',cursor:'pointer',boxShadow:'0 1px 2px rgba(24,24,25,.08)'}},
+        h('span',null,"Voir mon estimation"),h(Svg,{path:ICONS.arrow,size:16}))
+    )
+  );
+}
+
+/* ── Step 3: Result ── */
+function StepResult({bd,totalE,totalH,hourlyCost,setHourlyCost,submitted,onOpenEmail,onBack,teaseResult}){
+  const etp=totalH/1600;
+  const maxE=bd.length?Math.max(...bd.map(b=>b.euros),1):1;
+  const showTease=teaseResult&&!submitted;
+  return h('div',{style:{maxWidth:880,margin:'0 auto',animation:'stepIn .35s ease both'}},
+    h('div',{style:{position:'relative'}},
+      h('div',{style:{filter:showTease?'blur(9px)':'none',transition:'filter .35s',pointerEvents:showTease?'none':'auto'}},
+        h('div',{style:{background:'#fff',border:'1px solid #ECEEF5',borderRadius:16,padding:40,boxShadow:'0 8px 16px -4px rgba(24,24,25,.08),0 4px 8px -2px rgba(24,24,25,.04)',textAlign:'center'}},
+          h('div',{style:{fontSize:12,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',color:'#A4A9B5',marginBottom:14}},"Gain annuel estimé avec Komin"),
+          h('div',{className:'roi-hero roi-bignum',style:{fontSize:68,lineHeight:1,fontWeight:800,letterSpacing:'-0.04em',color:'#111'}},fmtEur(totalE)),
+          h('div',{style:{display:'flex',alignItems:'center',justifyContent:'center',gap:20,marginTop:18,flexWrap:'wrap'}},
+            h('span',{style:{fontSize:15,color:'#687083'}},"≈ ",h('strong',{style:{color:'#111',fontWeight:700}},fmtH(totalH))," récupérées"),
+            h('span',{style:{width:4,height:4,borderRadius:'50%',background:'#CDD2DE'}}),
+            h('span',{style:{fontSize:15,color:'#687083'}},"≈ ",h('strong',{style:{color:'#111',fontWeight:700}},num(Number(etp.toFixed(1)))+' ETP')," temps plein")
+          )
+        ),
+        h('div',{style:{marginTop:18,background:'#fff',border:'1px solid #ECEEF5',borderRadius:12,padding:26,boxShadow:'0 1px 2px rgba(24,24,25,.05)'}},
+          h('div',{style:{fontSize:14,fontWeight:700,color:'#111',marginBottom:18}},"Décomposition par processus"),
+          h('div',{style:{display:'flex',flexDirection:'column',gap:16}},
+            bd.map(b=>{
+              const pct=Math.max(3,Math.round((b.euros/maxE)*100));
+              return h('div',{key:b.m.id,style:{display:'flex',alignItems:'center',gap:14}},
+                h('div',{style:{width:32,height:32,borderRadius:8,flex:'none',display:'flex',alignItems:'center',justifyContent:'center',background:'#EFF1FC',color:'#3D52D5',padding:7}},h(Svg,{path:ICONS[b.m.iconKey],size:18})),
+                h('div',{style:{flex:1,minWidth:0}},
+                  h('div',{style:{display:'flex',alignItems:'baseline',justifyContent:'space-between',gap:12,marginBottom:6}},
+                    h('span',{style:{fontSize:14,fontWeight:600,color:'#111'}},b.m.title),
+                    h('span',{style:{fontSize:14,fontWeight:700,color:'#111',fontVariantNumeric:'tabular-nums'}},fmtEur(b.euros))
+                  ),
+                  h('div',{style:{height:8,borderRadius:999,background:'#ECEEF5',overflow:'hidden'}},
+                    h('div',{style:{height:'100%',borderRadius:999,background:'#3D52D5',width:pct+'%',transition:'width .4s'}}))
+                )
+              );
+            })
+          )
+        ),
+        h('div',{style:{marginTop:18,display:'flex',gap:14,alignItems:'flex-start',padding:'18px 20px',borderRadius:12,background:'#F9FAFB',border:'1px solid #ECEEF5'}},
+          h('span',{style:{display:'flex',width:18,height:18,flex:'none',color:'#A4A9B5',marginTop:1}},h(Svg,{path:ICONS.info,size:18})),
+          h('div',{style:{flex:1}},
+            h('div',{style:{fontSize:13,fontWeight:700,color:'#111',marginBottom:6}},"Hypothèses"),
+            h('p',{style:{fontSize:13,lineHeight:1.55,color:'#687083',margin:'0 0 12px'}},"Base : 47 semaines et 220 jours travaillés par an. Estimation indicative, à affiner ensemble. Le coût horaire chargé est ajustable :"),
+            h('div',{style:{display:'flex',alignItems:'center',gap:10}},
+              h('span',{style:{fontSize:13,color:'#687083'}},"Coût horaire chargé"),
+              h('div',{style:{display:'inline-flex',alignItems:'center',gap:4,border:'1px solid #E0E2E6',borderRadius:8,padding:'0 10px',background:'#fff',height:34}},
+                h('input',{type:'number',min:1,max:120,value:hourlyCost,
+                  onChange:e=>{const v=parseFloat(e.target.value);setHourlyCost(isNaN(v)?1:Math.max(1,Math.min(120,v)));},
+                  style:{width:46,border:'none',outline:'none',fontFamily:'inherit',fontSize:14,fontWeight:700,color:'#111',background:'transparent',textAlign:'right'}}),
+                h('span',{style:{fontSize:14,fontWeight:700,color:'#687083'}},"€/h")
+              )
+            )
+          )
+        )
+      ),
+      showTease&&h('div',{style:{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',padding:24}},
+        h('div',{style:{maxWidth:430,width:'100%',background:'#fff',borderRadius:16,border:'1px solid #ECEEF5',boxShadow:'0 20px 32px -8px rgba(24,24,25,.18)',padding:30}},
+          h('div',{style:{display:'inline-flex',alignItems:'center',gap:8,padding:'6px 12px',borderRadius:999,background:'#EFF1FC',color:'#3D52D5',fontSize:11,fontWeight:700,letterSpacing:'.06em',marginBottom:16}},
+            h(Svg,{path:ICONS.lock,size:13}),h('span',null,"AUDIT COMPLET")),
+          h('div',{style:{fontSize:20,lineHeight:1.25,fontWeight:800,letterSpacing:'-0.02em',color:'#111',marginBottom:8}},"Votre estimation est prête. Le rapport va beaucoup plus loin."),
+          h('p',{style:{fontSize:14,lineHeight:1.5,color:'#687083',margin:'0 0 18px'}},"Recevez l'audit détaillé, prêt à partager en interne. Il contient :"),
+          h('div',{style:{display:'flex',flexDirection:'column',gap:11,marginBottom:24}},
+            ['Le détail chiffré, processus par processus','Nos hypothèses et la méthode de calcul complète','Le comparatif avant / après Komin','Les pistes concrètes de déploiement sur votre site'].map(ti=>
+              h('div',{key:ti,style:{display:'flex',alignItems:'flex-start',gap:10}},
+                h('span',{style:{width:18,height:18,flex:'none',borderRadius:'50%',background:'#EFF1FC',color:'#3D52D5',display:'flex',alignItems:'center',justifyContent:'center',padding:4,marginTop:1}},h(Svg,{path:ICONS.check,size:10})),
+                h('span',{style:{fontSize:14,lineHeight:1.4,color:'#111'}},ti)
+              )
+            )
+          ),
+          h('button',{onClick:onOpenEmail,style:{width:'100%',display:'inline-flex',alignItems:'center',justifyContent:'center',gap:8,height:48,border:'none',borderRadius:8,background:'#3D52D5',fontFamily:'inherit',fontSize:16,fontWeight:600,color:'#fff',cursor:'pointer',boxShadow:'0 4px 12px -2px rgba(61,82,213,.4)'}},
+            h('span',null,"Recevoir mon audit complet"),h(Svg,{path:ICONS.arrow,size:16}))
+        )
+      )
+    ),
+    h('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:28,gap:16,flexWrap:'wrap'}},
+      h('button',{onClick:onBack,style:{display:'inline-flex',alignItems:'center',gap:8,height:48,padding:'0 18px',border:'1px solid #E0E2E6',borderRadius:8,background:'#fff',fontFamily:'inherit',fontSize:15,fontWeight:600,color:'#111',cursor:'pointer'}},"Modifier mes réponses"),
+      h('button',{onClick:onOpenEmail,style:{display:'inline-flex',alignItems:'center',gap:8,height:48,padding:'0 28px',border:'none',borderRadius:8,background:'#3D52D5',fontFamily:'inherit',fontSize:16,fontWeight:600,color:'#fff',cursor:'pointer',boxShadow:'0 4px 12px -2px rgba(61,82,213,.4)'}},
+        h('span',null,"Recevoir mon audit complet"),h(Svg,{path:ICONS.arrow,size:16}))
+    )
+  );
+}
+
+/* ── Email Modal ── */
+function EmailModal({totalE,firstName,setFirstName,email,setEmail,onClose,onSubmit}){
+  const [touched,setTouched]=useState(false);
+  const emailOk=/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)&&firstName.trim().length>0;
+  const emailFormatOk=/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
+  return h('div',{onClick:onClose,style:{position:'fixed',inset:0,zIndex:50,display:'flex',alignItems:'center',justifyContent:'center',padding:20,background:'rgba(17,17,17,.45)',backdropFilter:'blur(3px)',animation:'backdropIn .2s ease both'}},
+    h('div',{onClick:e=>e.stopPropagation(),style:{width:'100%',maxWidth:440,background:'#fff',borderRadius:16,padding:32,boxShadow:'0 32px 48px -12px rgba(24,24,25,.22)',animation:'modalIn .28s cubic-bezier(.2,.7,.3,1) both',position:'relative'}},
+      h('button',{onClick:onClose,style:{position:'absolute',top:18,right:18,width:32,height:32,border:'none',borderRadius:8,background:'#F9FAFB',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:'#687083',padding:8}},h(Svg,{path:ICONS.x,size:16})),
+      h('div',{style:{width:44,height:44,borderRadius:11,background:'#EFF1FC',display:'flex',alignItems:'center',justifyContent:'center',color:'#3D52D5',padding:11,marginBottom:18}},h(Svg,{path:ICONS.mail,size:22})),
+      h('h2',{style:{fontSize:22,lineHeight:1.2,fontWeight:800,letterSpacing:'-0.02em',color:'#111',margin:'0 0 8px'}},"Recevez votre audit complet — gratuit"),
+      h('p',{style:{fontSize:14,lineHeight:1.5,color:'#687083',margin:'0 0 8px'}},"Le rapport détaillé, processus par processus, avec vos hypothèses. Format PDF, prêt à partager en interne."),
+      h('div',{style:{display:'inline-flex',alignItems:'center',gap:8,padding:'7px 12px',borderRadius:8,background:'#F9FAFB',marginBottom:22}},
+        h('span',{style:{fontSize:13,color:'#687083'}},"Votre estimation :"),
+        h('span',{style:{fontSize:14,fontWeight:700,color:'#3D52D5',filter:'blur(6px)',userSelect:'none'}},fmtEur(totalE)),
+        h('span',{style:{fontSize:14,fontWeight:700,color:'#3D52D5'}}," / an")
+      ),
+      h('div',{style:{display:'flex',flexDirection:'column',gap:14}},
+        h('div',null,
+          h('label',{style:{display:'block',fontSize:13,fontWeight:600,color:'#111',marginBottom:6}},"Prénom"),
+          h('input',{type:'text',value:firstName,onInput:e=>setFirstName(e.target.value),placeholder:'Marie',style:{display:'block',width:'100%',padding:'11px 12px',fontFamily:'inherit',fontSize:15,color:'#111',background:'#fff',border:'1px solid #E0E2E6',borderRadius:8,outline:'none'}})
+        ),
+        h('div',null,
+          h('label',{style:{display:'block',fontSize:13,fontWeight:600,color:'#111',marginBottom:6}},"Email professionnel"),
+          h('input',{type:'email',value:email,onInput:e=>{setEmail(e.target.value);setTouched(true);},placeholder:'marie@votre-entreprise.fr',
+            style:{display:'block',width:'100%',padding:'11px 12px',fontFamily:'inherit',fontSize:15,color:'#111',background:'#fff',border:`1px solid ${touched&&!emailFormatOk?'#E22020':'#E0E2E6'}`,borderRadius:8,outline:'none'}}),
+          touched&&email.length>3&&!emailFormatOk&&h('p',{style:{fontSize:12,color:'#E22020',margin:'6px 0 0'}},"Indiquez une adresse email professionnelle valide.")
+        )
+      ),
+      h('button',{onClick:emailOk?onSubmit:undefined,disabled:!emailOk,
+        style:{width:'100%',marginTop:20,height:48,border:'none',borderRadius:8,background:emailOk?'#3D52D5':'#CDD2DE',fontFamily:'inherit',fontSize:16,fontWeight:600,color:'#fff',cursor:emailOk?'pointer':'not-allowed',boxShadow:'0 1px 2px rgba(24,24,25,.08)',transition:'background .15s'}},
+        "Recevoir mon audit"),
+      h('p',{style:{fontSize:11.5,lineHeight:1.5,color:'#A4A9B5',margin:'14px 0 0',textAlign:'center'}},"En continuant, vous acceptez d'être recontacté par Komin. Aucune revente de données. Désinscription en un clic. (RGPD)")
+    )
+  );
+}
+
+/* ── Step 4: Confirmation ── */
+function StepConfirm({totalE,email,onOpenReport,calendlyUrl}){
+  return h('div',{style:{maxWidth:560,margin:'24px auto 0',animation:'stepIn .4s ease both',textAlign:'center'}},
+    h('div',{style:{width:72,height:72,borderRadius:'50%',background:'#B3FCE1',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 24px',color:'#009A4D',padding:20}},h(Svg,{path:ICONS.check,size:32})),
+    h('h1',{style:{fontSize:30,lineHeight:1.2,fontWeight:800,letterSpacing:'-0.03em',color:'#111',margin:'0 0 10px'}},"Votre audit est en route ✓"),
+    h('p',{style:{fontSize:16,lineHeight:1.55,color:'#687083',margin:'0 0 6px'}},"Nous l'envoyons à ",h('strong',{style:{color:'#111',fontWeight:700}},email),"."),
+    h('p',{style:{fontSize:14,color:'#A4A9B5',margin:'0 0 28px'}},"Pensez à vérifier vos spams — il arrive d'ordinaire en moins d'une minute."),
+    h('div',{style:{background:'#fff',border:'1px solid #ECEEF5',borderRadius:12,padding:22,boxShadow:'0 1px 2px rgba(24,24,25,.05)',marginBottom:28}},
+      h('div',{style:{fontSize:12,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:'#A4A9B5',marginBottom:8}},"Votre estimation"),
+      h('div',{className:'roi-bignum',style:{fontSize:36,fontWeight:800,letterSpacing:'-0.03em',color:'#3D52D5'}},fmtEur(totalE),h('span',{style:{fontSize:18,color:'#A4A9B5',fontWeight:700}}," / an"))
+    ),
+    h('div',{style:{display:'flex',flexDirection:'column',gap:12}},
+      h('a',{href:calendlyUrl,target:'_blank',rel:'noopener',style:{display:'inline-flex',alignItems:'center',justifyContent:'center',gap:8,height:50,borderRadius:8,background:'#3D52D5',fontSize:16,fontWeight:600,color:'#fff',textDecoration:'none',boxShadow:'0 4px 12px -2px rgba(61,82,213,.4)'}},
+        h(Svg,{path:ICONS.calendar,size:18}),h('span',null,"Prendre rendez-vous avec un expert")),
+      h('button',{onClick:onOpenReport,style:{display:'inline-flex',alignItems:'center',justifyContent:'center',gap:8,height:48,borderRadius:8,background:'#fff',border:'1px solid #E0E2E6',fontFamily:'inherit',fontSize:15,fontWeight:600,color:'#111',cursor:'pointer'}},
+        h(Svg,{path:ICONS.download,size:16}),h('span',null,"Télécharger mon rapport maintenant"))
+    ),
+    h('p',{style:{fontSize:12,color:'#A4A9B5',margin:'22px 0 0'}},"Le rendez-vous dure 20 minutes. On revoit ces chiffres ensemble, sans engagement.")
+  );
+}
+
+/* ── ROI Ramp-up Chart ── */
+function RoiChart({totalE}){
+  const W=680,H=220,PL=56,PR=20,PT=16,PB=40;
+  const iW=W-PL-PR,iH=H-PT-PB;
+
+  // Monthly ramp-up factors (cumulative, months 1-24)
+  const RAMP=[0.05,0.15,0.30,0.50,0.65,0.78,0.87,0.92,0.96,0.98,1,1,1,1,1,1,1,1,1,1,1,1,1,1];
+  const monthly=totalE/12;
+  // cumulative gains month by month
+  const points=RAMP.map((r,i)=>({
+    month:i+1,
+    cum: RAMP.slice(0,i+1).reduce((s,f)=>s+f*monthly,0),
+  }));
+  const maxVal=points[points.length-1].cum;
+
+  function xOf(i){ return PL+i*(iW/(points.length-1)); }
+  function yOf(v){ return PT+iH-(v/maxVal)*iH; }
+
+  const linePath=points.map((p,i)=>(i===0?'M':'L')+xOf(i).toFixed(1)+' '+yOf(p.cum).toFixed(1)).join(' ');
+  const areaPath=linePath+' L'+xOf(points.length-1).toFixed(1)+' '+(PT+iH)+' L'+xOf(0).toFixed(1)+' '+(PT+iH)+' Z';
+
+
+  // Y-axis labels
+  function fmtK(v){ return v>=1000?(Math.round(v/1000)+'k €'):(Math.round(v)+' €'); }
+  const yTicks=[0,0.25,0.5,0.75,1].map(f=>({v:maxVal*f,y:yOf(maxVal*f)}));
+
+  // X-axis labels every 6 months
+  const xTicks=[1,6,12,18,24];
+
+  return h('div',{style:{overflowX:'auto'}},
+    h('div',{style:{display:'flex',alignItems:'center',justifyContent:'flex-end',gap:16,marginBottom:8}},
+      h('div',{style:{display:'flex',alignItems:'center',gap:6}},
+        h('div',{style:{width:24,height:3,borderRadius:2,background:'#3D52D5'}}),
+        h('span',{style:{fontSize:11,color:'#687083'}},"Gain cumulé (€)")
+      ),
+    ),
+    h('svg',{viewBox:`0 0 ${W} ${H}`,width:'100%',style:{display:'block',fontFamily:'Manrope,sans-serif'}},
+      // gradient def
+      h('defs',null,
+        h('linearGradient',{id:'roiGrad',x1:0,y1:0,x2:0,y2:1},
+          h('stop',{offset:'0%',stopColor:'#3D52D5',stopOpacity:0.18}),
+          h('stop',{offset:'100%',stopColor:'#3D52D5',stopOpacity:0.02})
+        )
+      ),
+      // grid lines
+      yTicks.map((t,i)=>h('line',{key:i,x1:PL,x2:W-PR,y1:t.y.toFixed(1),y2:t.y.toFixed(1),stroke:'#ECEEF5',strokeWidth:1})),
+      // Y labels
+      yTicks.map((t,i)=>h('text',{key:i,x:PL-6,y:(t.y+4).toFixed(1),textAnchor:'end',fontSize:10,fill:'#A4A9B5'},fmtK(t.v))),
+      // X labels
+      xTicks.map(m=>h('text',{key:m,x:xOf(m-1).toFixed(1),y:H-6,textAnchor:'middle',fontSize:10,fill:'#A4A9B5'},'M'+m)),
+      // Area fill
+      h('path',{d:areaPath,fill:'url(#roiGrad)'}),
+      // Gain line
+      h('path',{d:linePath,fill:'none',stroke:'#3D52D5',strokeWidth:2.5,strokeLinejoin:'round',strokeLinecap:'round'}),
+      // End value dot
+      h('circle',{cx:xOf(points.length-1).toFixed(1),cy:yOf(maxVal).toFixed(1),r:4,fill:'#3D52D5',stroke:'#fff',strokeWidth:2})
+    )
+  );
+}
+
+/* ── Report View ── */
+const SECTOR_NOTES={
+  'Industrie / production':"Forte densité d'instructions et d'audits qualité : les gains se concentrent sur les procédures et la remontée terrain.",
+  'BTP / construction':"Main-d'œuvre mobile et intérim élevé : l'accueil sécurité et la GED de chantier pèsent le plus.",
+  'Logistique & supply chain':"Volume de remontées et de contrôles important : la détection en temps réel domine.",
+  'Agroalimentaire':"Contraintes HACCP et traçabilité : audits et documentation sont les postes prioritaires.",
+  'Énergie & utilities':"Exigences réglementaires fortes : accueil sécurité et audits structurent le calcul.",
+  'Maintenance & services':"Équipes nomades multi-sites : instructions de travail et GED concentrent les gains.",
+  'Propreté / facility management':"Turnover élevé et multi-sites : l'accueil sécurité et les rondes/audits dominent.",
+  'Autre':"Calibrage neutre : les ordres de grandeur reposent uniquement sur vos réponses.",
+};
+
+function deriveCompany(email){
+  const m=/@([^@\s]+)$/.exec(email||'');
+  if(!m) return 'Votre entreprise';
+  let d=m[1].split('.')[0].replace(/[-_]+/g,' ').trim();
+  if(!d) return 'Votre entreprise';
+  return d.replace(/\b\w/g,c=>c.toUpperCase());
+}
+
+function ReportView({bd,totalE,totalH,hourlyCost,sector,teamSize,email,onClose,calendlyUrl}){
+  const etp=totalH/1600;
+  const today=new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+  const company=deriveCompany(email);
+  const sectorNote=SECTOR_NOTES[sector]||SECTOR_NOTES['Autre'];
+
+  const METHOD={
+    instructions:(v,m)=>({
+      formula:'Opérateurs × temps de recherche hebdo × 47 semaines × part digitalisée × coût horaire',
+      steps:[{k:'Opérateurs concernés',val:grp(v.a)},{k:'Temps perdu / semaine',val:displayValue({...m.inputs[1],value:v.b})},{k:'Semaines travaillées',val:'47 / an'},{k:'Part digitalisée avec Komin',val:v.c+' %'}],
+      note:"Le temps passé à chercher la bonne procédure est récupéré au prorata de ce qui est digitalisé sur 12 mois.",
+    }),
+    accueil:(v,m)=>({
+      formula:"Nouveaux entrants × durée d'accueil × part réalisable à distance × facteur de gain × coût horaire",
+      steps:[{k:'Nouveaux entrants / an',val:grp(v.a)},{k:"Durée d'un accueil",val:displayValue({...m.inputs[1],value:v.b})},{k:'Part réalisable à distance',val:v.c+' %'},{k:'Facteur de gain appliqué',val:'×2 (préparation + animation évitées)'}],
+      note:"On compte le temps de l'entrant et celui de l'encadrant : la partie théorique passée en autonomie libère les deux côtés.",
+    }),
+    ged:(v,m)=>{
+      const coefOui=(v.d&&v.d.indexOf('Oui')===0);
+      const fm=Math.max(0.8,Math.min(1.2,1+(6-v.c)*0.02));
+      return{
+        formula:'Personnes × temps de recherche / jour × 220 jours × taux de récupération × facteur de fraîcheur × coût horaire',
+        steps:[{k:'Personnes concernées',val:grp(v.a)},{k:"Recherche d'info / jour",val:displayValue({...m.inputs[1],value:v.b})},{k:'Jours travaillés',val:'220 / an'},{k:'Taux de temps récupéré',val:(coefOui?'20 %':'40 %')+(coefOui?' (GED déjà en place)':' (aucune GED)')},{k:'Facteur de fraîcheur doc.',val:'×'+num(Number(fm.toFixed(2)))+' (revue tous les '+v.c+' mois)'}],
+        note:"Le taux de récupération est l'hypothèse clé : 40 % sans GED, 20 % si une GED existe déjà.",
+      };
+    },
+    remontee:(v)=>({
+      formula:"Incidents / mois × 12 × coût d'une détection tardive × part évitable",
+      steps:[{k:'Incidents / mois',val:grp(v.a)},{k:"Coût d'une détection tardive",val:grp(v.b)+' €'},{k:'Part évitable en temps réel',val:v.c+' %'}],
+      note:"Gain en euros directs, indépendant du coût horaire : signaler en temps réel évite l'essentiel du surcoût.",
+    }),
+    audit:(v,m)=>({
+      formula:'Audits / an × (temps de réponse économisé + retraitement manuel évité) × coût horaire',
+      steps:[{k:'Audits / inspections / an',val:grp(v.a)},{k:'Temps de réponse / audit',val:displayValue({...m.inputs[1],value:v.b})+' → 20 min'},{k:'Retraitement manuel évité',val:displayValue({...m.inputs[2],value:v.c})}],
+      note:"La rédaction passe d'environ "+num(v.b)+" h à 20 min par audit, et la ressaisie est supprimée.",
+    }),
+  };
+
+  return h('div',{style:{minHeight:'100vh',background:'#F7F9FC',padding:'32px 20px'}},
+    h('div',{className:'roi-noprint',style:{maxWidth:760,margin:'0 auto 16px',display:'flex',alignItems:'center',justifyContent:'space-between'}},
+      h('button',{onClick:onClose,style:{display:'inline-flex',alignItems:'center',gap:8,height:40,padding:'0 16px',border:'1px solid #E0E2E6',borderRadius:8,background:'#fff',fontFamily:'inherit',fontSize:14,fontWeight:600,color:'#111',cursor:'pointer'}},"Retour"),
+      h('button',{onClick:()=>window.print(),style:{display:'inline-flex',alignItems:'center',gap:8,height:40,padding:'0 18px',border:'none',borderRadius:8,background:'#3D52D5',fontFamily:'inherit',fontSize:14,fontWeight:600,color:'#fff',cursor:'pointer'}},h(Svg,{path:ICONS.download,size:15}),h('span',null,"Imprimer / PDF"))
+    ),
+    /* Page 1 */
+    h('div',{className:'roi-report',style:{maxWidth:760,margin:'0 auto',background:'#fff',border:'1px solid #ECEEF5',borderRadius:12,padding:48,boxShadow:'0 8px 16px -4px rgba(24,24,25,.08)'}},
+      h('div',{style:{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:20,paddingBottom:24,borderBottom:'2px solid #111'}},
+        h('div',null,
+          h('span',{style:{color:'#3D52D5',display:'flex',marginBottom:18}},h(KominLogo,{height:26})),
+          h('div',{style:{fontSize:12,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',color:'#3D52D5',marginBottom:6}},"Audit ROI"),
+          h('h1',{style:{fontSize:28,lineHeight:1.15,fontWeight:800,letterSpacing:'-0.03em',color:'#111',margin:0}},company)
+        ),
+        h('div',{style:{textAlign:'right',flex:'none'}},
+          h('div',{style:{fontSize:12,color:'#A4A9B5'}},today),
+          h('div',{style:{fontSize:12,color:'#A4A9B5',marginTop:4}},sector||'—'),
+          h('div',{style:{fontSize:12,color:'#A4A9B5',marginTop:4}},(teamSize>=500?'500 +':teamSize)+' personnes sur le terrain')
+        )
+      ),
+      h('div',{style:{padding:'30px 0',borderBottom:'1px solid #ECEEF5'}},
+        h('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,marginBottom:8,flexWrap:'wrap'}},
+          h('div',{style:{fontSize:13,color:'#687083'}},"Gain annuel estimé"),
+          h('div',{style:{display:'inline-flex',alignItems:'center',gap:6,padding:'4px 10px',borderRadius:6,background:'#EFF1FC'}},
+            h('span',{style:{fontSize:11,fontWeight:700,letterSpacing:'.04em',textTransform:'uppercase',color:'#3D52D5'}},"Période"),
+            h('span',{style:{fontSize:12,fontWeight:600,color:'#3D52D5'}},"M4 → M12 · à plein régime")
+          )
+        ),
+        h('div',{className:'roi-bignum',style:{fontSize:52,lineHeight:1,fontWeight:800,letterSpacing:'-0.04em',color:'#3D52D5'}},fmtEur(totalE)),
+        h('div',{style:{display:'flex',gap:24,marginTop:14,flexWrap:'wrap'}},
+          h('span',{style:{fontSize:14,color:'#687083'}},"≈ ",h('strong',{style:{color:'#111'}},fmtH(totalH))," récupérées / an"),
+          h('span',{style:{fontSize:14,color:'#687083'}},"≈ ",h('strong',{style:{color:'#111'}},num(Number(etp.toFixed(1)))+' ETP')," équivalent temps plein"),
+          h('span',{style:{fontSize:14,color:'#687083'}},"Base : ",h('strong',{style:{color:'#111'}},"47 sem. · 220 j")," travaillés / an")
+        )
+      ),
+      h('div',{style:{padding:'28px 0'}},
+        h('div',{style:{fontSize:13,fontWeight:700,letterSpacing:'.04em',textTransform:'uppercase',color:'#A4A9B5',marginBottom:18}},"Projection du gain sur 24 mois"),
+        h('div',{className:'roi-chart-wrap',style:{marginBottom:6}},h(RoiChart,{totalE})),
+        h('p',{style:{fontSize:11.5,color:'#A4A9B5',margin:'0 0 28px',lineHeight:1.5}},"Montée en charge progressive sur les 3 premiers mois (déploiement, formation). Gain mensuel à plein régime dès M4. Investissement Komin indicatif — à affiner lors d'un échange."),
+        h('div',{style:{fontSize:13,fontWeight:700,letterSpacing:'.04em',textTransform:'uppercase',color:'#A4A9B5',marginBottom:18}},"Détail par processus"),
+        h('div',{style:{display:'flex',flexDirection:'column',gap:18}},
+          bd.map(b=>h('div',{key:b.m.id,style:{display:'flex',gap:16,alignItems:'flex-start'}},
+            h('div',{style:{width:36,height:36,borderRadius:9,flex:'none',display:'flex',alignItems:'center',justifyContent:'center',background:'#EFF1FC',color:'#3D52D5',padding:8}},h(Svg,{path:ICONS[b.m.iconKey],size:20})),
+            h('div',{style:{flex:1}},
+              h('div',{style:{display:'flex',alignItems:'baseline',justifyContent:'space-between',gap:12}},
+                h('span',{style:{fontSize:15,fontWeight:700,color:'#111'}},b.m.title),
+                h('span',{style:{fontSize:16,fontWeight:800,color:'#111',fontVariantNumeric:'tabular-nums'}},fmtEur(b.euros))
+              ),
+              h('p',{style:{fontSize:12.5,lineHeight:1.5,color:'#687083',margin:'5px 0 0'}},
+                b.m.inputs.map(inp=>inp.label+' : '+displayValue({...inp,value:b.v[inp.key]})).join('  ·  ')
+              )
+            )
+          ))
+        )
+      ),
+      h('div',{style:{padding:'18px 20px',borderRadius:10,background:'#F9FAFB',border:'1px solid #ECEEF5',marginBottom:28}},
+        h('div',{style:{fontSize:12,fontWeight:700,color:'#111',marginBottom:4}},"Hypothèses de calcul"),
+        h('p',{style:{fontSize:12,lineHeight:1.5,color:'#687083',margin:0}},"Coût horaire chargé : "+hourlyCost+" €/h · 47 semaines et 220 jours travaillés par an. Estimation indicative établie à partir des réponses fournies — à affiner lors d'un échange.")
+      ),
+      h('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',gap:20,padding:24,borderRadius:12,background:'#3D52D5'}},
+        h('div',null,
+          h('div',{style:{fontSize:17,fontWeight:800,color:'#fff',letterSpacing:'-0.01em'}},"Validons ces chiffres ensemble."),
+          h('div',{style:{fontSize:13,color:'#CFD6FF',marginTop:3}},"20 minutes avec un expert Komin, sans engagement.")
+        ),
+        h('a',{href:calendlyUrl,target:'_blank',rel:'noopener',style:{flex:'none',display:'inline-flex',alignItems:'center',gap:8,height:44,padding:'0 22px',borderRadius:8,background:'#fff',fontSize:14,fontWeight:700,color:'#3D52D5',textDecoration:'none'}},"Prendre rendez-vous")
+      ),
+      h('div',{style:{marginTop:24,textAlign:'center',fontSize:11,color:'#A4A9B5'}},"komin.io · Digitalisez vos opérations terrain")
+    ),
+    /* Page 2 - Méthode */
+    h('div',{className:'roi-report',style:{pageBreakBefore:'always',breakBefore:'page',maxWidth:760,margin:'16px auto 0',background:'#fff',border:'1px solid #ECEEF5',borderRadius:12,padding:48,boxShadow:'0 8px 16px -4px rgba(24,24,25,.08)'}},
+      h('div',{style:{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:20,paddingBottom:20,borderBottom:'2px solid #111'}},
+        h('div',null,
+          h('div',{style:{fontSize:12,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',color:'#3D52D5',marginBottom:6}},"Méthode & hypothèses"),
+          h('h1',{style:{fontSize:24,lineHeight:1.15,fontWeight:800,letterSpacing:'-0.03em',color:'#111',margin:0}},"Comment ce chiffre est calculé")
+        ),
+        h('span',{style:{color:'#3D52D5',display:'flex',flex:'none'}},h(KominLogo,{height:26}))
+      ),
+      h('div',{style:{padding:'26px 0',borderBottom:'1px solid #ECEEF5'}},
+        h('div',{style:{fontSize:13,fontWeight:700,letterSpacing:'.04em',textTransform:'uppercase',color:'#A4A9B5',marginBottom:14}},"Bases communes à tous les processus"),
+        h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,maxWidth:480,margin:'0 auto'}},
+          h('div',{style:{display:'flex',alignItems:'center',gap:10,padding:'14px 16px',borderRadius:10,background:'#F9FAFB',border:'1px solid #ECEEF5'}},
+            h('div',{style:{fontSize:22,fontWeight:800,color:'#3D52D5',lineHeight:1,fontVariantNumeric:'tabular-nums',whiteSpace:'nowrap',flex:'none'}},hourlyCost+' €'),
+            h('div',{style:{fontSize:12.5,lineHeight:1.4,color:'#687083'}},"Coût horaire chargé (salaire + charges + frais), ajustable.")),
+          h('div',{style:{display:'flex',alignItems:'center',gap:10,padding:'14px 16px',borderRadius:10,background:'#F9FAFB',border:'1px solid #ECEEF5'}},
+            h('div',{style:{fontSize:22,fontWeight:800,color:'#3D52D5',lineHeight:1,fontVariantNumeric:'tabular-nums',whiteSpace:'nowrap',flex:'none'}},'47 / 220'),
+            h('div',{style:{fontSize:12.5,lineHeight:1.4,color:'#687083'}},"Semaines et jours travaillés par an, congés et absences déduits."))
+        ),
+        h('p',{style:{fontSize:12.5,lineHeight:1.55,color:'#687083',margin:'14px 0 0'}},"Chaque processus convertit un temps perdu (ou un surcoût) en gain annuel. Les gains en temps sont valorisés au coût horaire ci-dessus ; la remontée terrain produit un gain en euros directs, indépendant de ce taux.")
+      ),
+      h('div',{style:{padding:'26px 0',borderBottom:'1px solid #ECEEF5'}},
+        h('div',{style:{fontSize:13,fontWeight:700,letterSpacing:'.04em',textTransform:'uppercase',color:'#A4A9B5',marginBottom:12}},"Calibrage selon votre secteur"),
+        h('div',{style:{display:'flex',gap:14,alignItems:'flex-start',padding:'16px 18px',borderRadius:10,background:'#EFF1FC'}},
+          h('span',{style:{display:'flex',width:18,height:18,flex:'none',color:'#3D52D5',marginTop:1}},h(Svg,{path:ICONS.info,size:18})),
+          h('div',null,
+            h('div',{style:{fontSize:14,fontWeight:700,color:'#111',marginBottom:4}},sector||'—'),
+            h('div',{style:{fontSize:13,lineHeight:1.5,color:'#2C41C4'}},sectorNote))
+        )
+      ),
+      h('div',{style:{padding:'26px 0 0'}},
+        h('div',{style:{fontSize:13,fontWeight:700,letterSpacing:'.04em',textTransform:'uppercase',color:'#A4A9B5',marginBottom:18}},"Règle de calcul par processus"),
+        h('div',{style:{display:'flex',flexDirection:'column',gap:22}},
+          bd.map(b=>{
+            const f=METHOD[b.m.id];const o=f?f(b.v,b.m):{formula:'',steps:[],note:''};
+            return h('div',{key:b.m.id,style:{border:'1px solid #ECEEF5',borderRadius:12,padding:22}},
+              h('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,marginBottom:14}},
+                h('div',{style:{display:'flex',alignItems:'center',gap:12}},
+                  h('div',{style:{width:34,height:34,borderRadius:9,flex:'none',display:'flex',alignItems:'center',justifyContent:'center',background:'#EFF1FC',color:'#3D52D5',padding:8}},h(Svg,{path:ICONS[b.m.iconKey],size:18})),
+                  h('span',{style:{fontSize:16,fontWeight:700,color:'#111',letterSpacing:'-0.01em'}},b.m.title)
+                ),
+                h('span',{style:{fontSize:15,fontWeight:800,color:'#3D52D5',fontVariantNumeric:'tabular-nums',flex:'none'}},fmtEur(b.euros))
+              ),
+              h('div',{style:{fontSize:13,lineHeight:1.5,color:'#111',background:'#F9FAFB',border:'1px solid #ECEEF5',borderRadius:8,padding:'11px 14px',marginBottom:14,fontWeight:600}},o.formula),
+              h('div',{style:{display:'flex',flexDirection:'column',gap:7,marginBottom:12}},
+                o.steps.map((sp,i)=>h('div',{key:i,style:{display:'flex',alignItems:'baseline',justifyContent:'space-between',gap:12,fontSize:13}},
+                  h('span',{style:{color:'#687083'}},sp.k),
+                  h('span',{style:{color:'#111',fontWeight:700,fontVariantNumeric:'tabular-nums',textAlign:'right'}},sp.val)
+                ))
+              ),
+              h('p',{style:{fontSize:12.5,lineHeight:1.55,color:'#687083',margin:0}},o.note)
+            );
+          })
+        )
+      ),
+      h('div',{style:{marginTop:28,textAlign:'center',fontSize:11,color:'#A4A9B5'}},"komin.io · Méthode de calcul — estimation indicative, à valider ensemble")
+    )
+  );
+}
+
+/* ── Root App ── */
+function App(){
+  const CALENDLY='https://calendly.com/komin/demo';
+  const [step,setStep]=useState('qualif');
+  const [view,setView]=useState('app');
+  const [sector,setSector]=useState('');
+  const [teamSize,setTeamSize]=useState(50);
+  const [selected,setSelected]=useState([]);
+  const [inputs,setInputs]=useState({});
+  const [hourlyCost,setHourlyCost]=useState(35);
+  const [firstName,setFirstName]=useState('');
+  const [email,setEmail]=useState('');
+  const [submitted,setSubmitted]=useState(false);
+
+  function goQuestions(){
+    const ns={...inputs};
+    for(const m of getModules()){if(selected.includes(m.id)&&!ns[m.id])ns[m.id]={...m.def(teamSize)};}
+    setInputs(ns);setStep('questions');
+  }
+
+  const {bd,totalE,totalH}=compute(selected,inputs,teamSize,hourlyCost);
+
+  if(view==='report'){
+    return h(ReportView,{bd,totalE,totalH,hourlyCost,sector,teamSize,email,calendlyUrl:CALENDLY,onClose:()=>setView('app')});
+  }
+
+  return h('div',{style:{minHeight:'100vh',background:'#F7F9FC',display:'flex',flexDirection:'column'}},
+    /* Top bar */
+    h('div',{className:'roi-pad',style:{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'18px 40px',borderBottom:'1px solid #ECEEF5',background:'#fff',position:'sticky',top:0,zIndex:20}},
+      h('div',{style:{display:'flex',alignItems:'center',gap:14}},
+        h('span',{style:{color:'#3D52D5',display:'flex'}},h(KominLogo,{height:24})),
+        h('span',{style:{height:18,width:1,background:'#E0E2E6',display:'inline-block'}}),
+        h('span',{style:{fontSize:13,fontWeight:600,color:'#687083',letterSpacing:'.01em'}},"Calculateur de ROI")
+      ),
+      h('div',{className:'roi-topactions',style:{fontSize:12,fontWeight:600,color:'#A4A9B5',textTransform:'uppercase',letterSpacing:'.06em'}},"Estimation gratuite · 5 min")
+    ),
+    /* Progress */
+    h(ProgressBar,{step}),
+    /* Content */
+    h('div',{className:'roi-pad',style:{flex:1,padding:40,position:'relative',paddingBottom:80}},
+      step==='qualif'&&h(StepQualif,{sector,setSector,teamSize,setTeamSize,selected,setSelected,onNext:goQuestions}),
+      step==='questions'&&h(StepQuestions,{selected,inputs,setInputs,teamSize,onBack:()=>setStep('qualif'),onNext:()=>setStep('result')}),
+      (step==='result'||step==='email')&&h(StepResult,{bd,totalE,totalH,hourlyCost,setHourlyCost,submitted,teaseResult:true,onOpenEmail:()=>setStep('email'),onBack:()=>setStep('questions')}),
+      step==='confirm'&&h(StepConfirm,{totalE,email,calendlyUrl:CALENDLY,onOpenReport:()=>setView('report')})
+    ),
+    /* Footer */
+    h('footer',{style:{borderTop:'1px solid #ECEEF5',background:'#fff',padding:'20px 40px',marginTop:'auto'}},
+      h('div',{style:{maxWidth:880,margin:'0 auto',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:12}},
+        h('div',{style:{display:'flex',alignItems:'center',gap:10}},
+          h('a',{href:'https://komin.io',target:'_blank',rel:'noopener',style:{color:'#3D52D5',display:'flex'}},h(KominLogo,{height:16})),
+          h('span',{style:{fontSize:12,color:'#A4A9B5'}},"© "+(new Date().getFullYear())+" Komin SAS — Tous droits réservés")
+        ),
+        h('div',{style:{display:'flex',gap:20,flexWrap:'wrap'}},
+          h('a',{href:'https://komin.io/mentions-legales',target:'_blank',rel:'noopener',style:{fontSize:12,color:'#A4A9B5',textDecoration:'none'}},"Mentions légales"),
+          h('a',{href:'https://komin.io/politique-de-confidentialite',target:'_blank',rel:'noopener',style:{fontSize:12,color:'#A4A9B5',textDecoration:'none'}},"Politique de confidentialité"),
+          h('a',{href:'https://komin.io/cgv',target:'_blank',rel:'noopener',style:{fontSize:12,color:'#A4A9B5',textDecoration:'none'}},"CGV"),
+          h('span',{style:{fontSize:12,color:'#A4A9B5'}},"contact@komin.io")
+        )
+      )
+    ),
+    /* Email modal */
+    step==='email'&&h(EmailModal,{totalE,firstName,setFirstName,email,setEmail,
+      onClose:()=>setStep('result'),
+      onSubmit:()=>setSubmitted(true)&&setStep('confirm')||setStep('confirm')})
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(App));
+})();
+</script>
+</body>
+</html>
