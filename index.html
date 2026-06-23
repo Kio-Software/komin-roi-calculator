@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Calculateur de ROI — Komin</title>
+<link rel="icon" type="image/svg+xml" href="assets/logo-k-round.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&display=swap" rel="stylesheet">
 <style>
@@ -79,7 +80,7 @@ const ICONS = {
 /* ── Module definitions ── */
 function getModules(){
   return [
-    { id:'instructions', title:'Production - Instructions de travail',
+    { id:'instructions', role:'Production', title:'Instructions de travail',
       desc:'Procédures et modes opératoires à jour, accessibles au poste.',
       fact:"Un opérateur passe en moyenne 45 min/semaine à chercher la bonne procédure. Sur 50 opérateurs, c'est 1 950 h perdues par an.",
       iconKey:'docs',
@@ -90,7 +91,7 @@ function getModules(){
         {key:'b',label:"Temps perdu à chercher la bonne procédure",unit:'min/sem',min:0,max:180,step:5,hint:"Chercher la bonne version, valider, faire des allers-retours bureau / atelier."},
         {key:'c',label:'Part des instructions digitalisées avec Komin (sur 12 mois)',unit:'%',min:0,max:100,step:5,hint:"Repère : avec Komin, un utilisateur à temps plein crée 10 instructions par semaine."},
       ]},
-    { id:'accueil', title:'QHSE - Accueils sécurité',
+    { id:'accueil', role:'QHSE', title:'Accueils sécurité',
       desc:"Parcours d'accueil sécurité digital pour chaque nouvel entrant.",
       fact:"60 % des accidents terrain surviennent dans les 6 premiers mois à un nouveau poste. Un accueil digitalisé réduit ce risque d'environ 40 %.",
       iconKey:'shield',
@@ -101,7 +102,7 @@ function getModules(){
         {key:'b',label:"Durée d'un accueil sécurité",unit:'h',min:0.5,max:4,step:0.5,hint:"Un accueil sécurité papier dure en moyenne 2 h par entrant."},
         {key:'c',label:'Part des accueils réalisables à distance',unit:'%',min:0,max:100,step:5,hint:"Séparez la partie théorique (faisable à distance) de la partie pratique sur site."},
       ]},
-    { id:'ged', title:'Qualité - GED (Gestion Documentaire)',
+    { id:'ged', role:'Qualité', title:'GED (Gestion documentaire)',
       desc:'Tous vos documents centralisés, versionnés et cherchables.',
       fact:"Les employés passent 1,8 h par jour à chercher de l'information (McKinsey, 2012). Sur un site de 30 personnes, c'est l'équivalent de 5 ETP perdus par an.",
       iconKey:'folder',
@@ -113,7 +114,7 @@ function getModules(){
         {key:'c',label:'Fréquence de mise à jour / revue de la documentation',unit:'mois',min:1,max:36,step:1,hint:"Tous les combien de mois la documentation est revue ou mise à jour."},
         {key:'d',type:'select',label:'Une GED est-elle déjà en place ?',options:['Non, pas encore','Oui, déjà en place'],hint:"Hypothèse clé : 40 % si aucune GED, 20 % si une GED est déjà en place."},
       ]},
-    { id:'remontee', title:'Production/Maintenance - Remontées terrain',
+    { id:'remontee', role:'Production / Maintenance', title:'Remontées Terrain',
       desc:'Signalement mobile des anomalies et presque-accidents.',
       fact:"70 % des non-conformités détectées tardivement auraient pu être signalées 2 à 4 semaines plus tôt avec un outil de remontée mobile.",
       iconKey:'warning',
@@ -124,7 +125,7 @@ function getModules(){
         {key:'b',label:"Coût moyen d'une détection tardive",unit:'€',min:0,max:5000,step:100,hint:"Reprise, rebut, arrêt, sanction… quand c'est vu trop tard."},
         {key:'c',label:'Part évitable avec une remontée en temps réel',unit:'%',min:0,max:90,step:5,hint:"Signalé en temps réel depuis le terrain plutôt que 2 à 4 semaines plus tard."},
       ]},
-    { id:'audit', title:'Managers - Audits terrain',
+    { id:'audit', role:'Managers', title:"Formulaires d'Audit terrain",
       desc:'Audits, inspections et rondes réalisés et restitués sur place.',
       fact:"Un auditeur terrain passe en moyenne 3 h à rédiger son rapport après chaque audit. Avec un outil digital : moins de 20 minutes.",
       iconKey:'clipboard',
@@ -135,7 +136,7 @@ function getModules(){
         {key:'b',label:'Temps passé à répondre aux audits',unit:'h',min:0,max:6,step:0.5,hint:"Préparer les preuves, rassembler les documents, rédiger les réponses."},
         {key:'c',label:'Temps de retraitement manuel par audit',unit:'min',min:0,max:240,step:5,hint:"Ressaisie, mise en forme et consolidation des constats (Excel, rapports)."},
       ]},
-    { id:'bonnes_pratiques', title:'Production/Maintenance - Bonnes pratiques',
+    { id:'bonnes_pratiques', role:'Production / Maintenance', title:'Fiches de bonnes pratiques',
       desc:'Capitalisation et partage des savoir-faire et retours d\'expérience terrain.',
       fact:"Les entreprises industrielles perdent en moyenne 20 % de leur savoir-faire opérationnel chaque année par départ ou mutation. Capitaliser les bonnes pratiques réduit de moitié ce transfert.",
       iconKey:'bulb',
@@ -146,7 +147,7 @@ function getModules(){
         {key:'b',label:"Temps perdu à partager ou retrouver une bonne pratique",unit:'min/sem',min:0,max:120,step:5,hint:"Temps passé à transmettre oralement ou à chercher un retour d’expérience existant."},
         {key:'c',label:'Part des bonnes pratiques capitalisées avec Komin (sur 12 mois)',unit:'%',min:0,max:100,step:5,hint:"Restitution vidéo, fiche ou photo : chaque contenu créé reste accessible et cherchable."},
       ]},
-    { id:'habilitations', title:'QHSE - Habilitations',
+    { id:'habilitations', role:'QHSE', title:'Gestion des habilitations',
       desc:'Suivi des habilitations, certifications et autorisations de conduite ou d\'accès.',
       fact:"Une habilitation expirée non détectée peut entraîner un arrêt de poste, une non-conformité réglementaire ou un accident. Le suivi manuel génère en moyenne 2 à 4 h de gestion administrative par habilitation et par an.",
       iconKey:'calendar',
@@ -264,10 +265,13 @@ function StepQualif({sector,setSector,teamSize,setTeamSize,selected,setSelected,
           h('div',{style:{width:40,height:40,borderRadius:10,flex:'none',display:'flex',alignItems:'center',justifyContent:'center',
             background:sel?'#3D52D5':'#EFF1FC',color:sel?'#fff':'#3D52D5',padding:9}},h(Svg,{path:ICONS[m.iconKey],size:22})),
           h('div',{style:{flex:1,minWidth:0}},
-            h('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}},
-              h('span',{style:{fontSize:15,fontWeight:700,color:'#111',letterSpacing:'-0.01em'}},m.title),
+            h('div',{style:{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:8}},
+              h('div',null,
+                h('span',{style:{display:'block',fontSize:11,fontWeight:500,color:'#A4A9B5',letterSpacing:'0.02em',marginBottom:2}},m.role),
+                h('span',{style:{fontSize:15,fontWeight:700,color:'#111',letterSpacing:'-0.01em'}},m.title)
+              ),
               h('span',{style:{width:20,height:20,borderRadius:6,flex:'none',display:'flex',alignItems:'center',justifyContent:'center',
-                background:sel?'#3D52D5':'#fff',border:`1.5px solid ${sel?'#3D52D5':'#CDD2DE'}`,color:'#fff',padding:3}},
+                background:sel?'#3D52D5':'#fff',border:`1.5px solid ${sel?'#3D52D5':'#CDD2DE'}`,color:'#fff',padding:3,marginTop:2}},
                 sel&&h(Svg,{path:ICONS.check,size:14}))
             ),
             h('p',{style:{fontSize:13,lineHeight:1.45,color:'#687083',margin:'4px 0 0'}},m.desc)
@@ -304,7 +308,10 @@ function StepQuestions({selected,inputs,setInputs,teamSize,onBack,onNext}){
           h('div',{style:{display:'flex',alignItems:'center',gap:14,marginBottom:22}},
             h('div',{style:{width:40,height:40,borderRadius:10,flex:'none',display:'flex',alignItems:'center',justifyContent:'center',background:'#EFF1FC',color:'#3D52D5',padding:9}},h(Svg,{path:ICONS[m.iconKey],size:22})),
             h('div',null,
-              h('div',{style:{fontSize:16,fontWeight:700,color:'#111',letterSpacing:'-0.01em'}},m.title),
+              h('div',null,
+                h('span',{style:{display:'block',fontSize:11,fontWeight:500,color:'#A4A9B5',letterSpacing:'0.02em',marginBottom:2}},m.role),
+                h('div',{style:{fontSize:16,fontWeight:700,color:'#111',letterSpacing:'-0.01em'}},m.title)
+              ),
               h('div',{style:{fontSize:13,color:'#687083'}},m.desc)
             )
           ),
