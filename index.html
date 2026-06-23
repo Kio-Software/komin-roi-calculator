@@ -454,7 +454,7 @@ function EmailModal({totalE,totalH,sector,teamSize,selected,bd,hourlyCost,firstN
             {name:'roi_cout_horaire',value:hourlyCost+' €/h'},
             {name:'roi_detail',      value:bd.map(b=>b.m.title+' : '+fmtEur(b.euros)).join(' | ')},
           ],
-          context:{pageUri:'https://komin.io',pageName:'Calculateur ROI Komin',hutk:document.cookie.split(';').map(c=>c.trim()).find(c=>c.startsWith('hubspotutk='))?.split('=')[1]||undefined},
+          context:{pageUri:window.location.href,pageName:'Calculateur ROI Komin',hutk:document.cookie.split(';').map(c=>c.trim()).find(c=>c.startsWith('hubspotutk='))?.split('=')[1]||undefined},
         }),
       });
       if(!res.ok){ const body=await res.json().catch(()=>null); console.error('HubSpot error',res.status,body); }
