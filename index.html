@@ -35,6 +35,8 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 }
 #root{min-height:100vh;}
 </style>
+<!-- HubSpot tracking -->
+<script type="text/javascript" id="hs-script-loader" async defer src="//js-eu1.hs-scripts.com/27225194.js"></script>
 </head>
 <body>
 <div id="root"></div>
@@ -436,7 +438,7 @@ function EmailModal({totalE,totalH,sector,teamSize,selected,bd,hourlyCost,firstN
     setSubmitting(true);
     try {
       const etp=totalH/1600;
-      await fetch('https://api.hsforms.com/submissions/v3/integration/submit/27225194/2b156bc1-134e-44f3-a279-7bb4ca8982db',{
+      const res=await fetch('https://api.hsforms.com/submissions/v3/integration/submit/27225194/2b156bc1-134e-44f3-a279-7bb4ca8982db',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({
@@ -452,9 +454,10 @@ function EmailModal({totalE,totalH,sector,teamSize,selected,bd,hourlyCost,firstN
             {name:'roi_cout_horaire',value:hourlyCost+' €/h'},
             {name:'roi_detail',      value:bd.map(b=>b.m.title+' : '+fmtEur(b.euros)).join(' | ')},
           ],
-          context:{pageUri:window.location.href,pageName:'Calculateur ROI Komin'},
+          context:{pageUri:window.location.href,pageName:'Calculateur ROI Komin',hutk:document.cookie.split(';').map(c=>c.trim()).find(c=>c.startsWith('hubspotutk='))?.split('=')[1]||undefined},
         }),
       });
+      if(!res.ok){ const body=await res.json().catch(()=>null); console.error('HubSpot error',res.status,body); }
     } catch(e){ console.error('HubSpot submission error',e); }
     setSubmitting(false);
     onSubmit();
